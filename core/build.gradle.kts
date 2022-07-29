@@ -4,8 +4,14 @@ plugins {
 }
 
 kotlin {
-    jvm()
-    js {
+    jvm {
+//        compilations.all {
+//            kotlinOptions.jvmTarget = "1.8"
+//        }
+//        withJava()
+    }
+    js(IR) {
+//        binaries.executable()
         browser()
         nodejs()
     }
