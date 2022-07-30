@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <title>Tic Tac Toe</title>
+    <script src="../../core/build/distributions/core.js"></script>
+    <style>
+        .field {
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            width: 900px;
+            height: 900px;
+            background-color: #e6e6e6;
+            border-radius: 10px;
+            padding: 10px 0 0 10px;
+
+        }
+
+        .field-cell {
+            color: black;
+            width: 290px;
+            height: 290px;
+            background-color: #a7c6c6;
+            margin: 0 10px 10px 0;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<!-- Сюда будем выводить результат с кнопкой перезапуска -->
+<div id="result"></div>
+<!-- Главное поле сюда при рендере закинем ячейки поля -->
+<div class="field" id="field"></div>
+<body>
+<script>
+    // Иконки крестиков и ноликов которые будем выводить в ячейки
+    const crossSVG = `
+        <svg class="svg-icon"
+             style="width: 100%; height: auto;vertical-align: middle;fill: currentColor;overflow: hidden;"
+             viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+            <path d="M810.65984 170.65984q18.3296 0 30.49472 12.16512t12.16512 30.49472q0 18.00192-12.32896 30.33088l-268.67712 268.32896 268.67712 268.32896q12.32896 12.32896 12.32896 30.33088 0 18.3296-12.16512 30.49472t-30.49472 12.16512q-18.00192 0-30.33088-12.32896l-268.32896-268.67712-268.32896 268.67712q-12.32896 12.32896-30.33088 12.32896-18.3296 0-30.49472-12.16512t-12.16512-30.49472q0-18.00192 12.32896-30.33088l268.67712-268.32896-268.67712-268.32896q-12.32896-12.32896-12.32896-30.33088 0-18.3296 12.16512-30.49472t30.49472-12.16512q18.00192 0 30.33088 12.32896l268.32896 268.67712 268.32896-268.67712q12.32896-12.32896 30.33088-12.32896z"/>
+        </svg>
+    `;
+    const circleSymbol = `
+        <svg class="svg-icon"
+             style="width: 100%; height: auto;vertical-align: middle;fill: currentColor;overflow: hidden;"
+             viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+            <path d="M512 85.333333a426.666667 426.666667 0 1 0 426.666667 426.666667A426.666667 426.666667 0 0 0 512 85.333333z m0 768a341.333333 341.333333 0 1 1 341.333333-341.333333 341.333333 341.333333 0 0 1-341.333333 341.333333z"/>
+        </svg>
+    `;
+
+    /**
+     * Обращаемся к SDK импортируем то что будем использовать для создания игры
+     * */
+    const sdk = window.core.org.rubicon.game.impl
+    const {Game, PlayerType} = sdk
+    const {GameEventType} = sdk.events
+
+    /**
+     * Обработчик события окончания игры
+     * */
+    function gameOver(event) {
+        const {winner, source} = event
+        const winnerText = document.createElement("H3")
+        switch (winner) {
+            case PlayerType.NONE:
+                winnerText.innerText = "Ничья"
+                break
+            case PlayerType.CROSS:
+                winnerText.innerText = "Выиграли крестики"
+                break
+            case PlayerType.ZERO:
+                winnerText.innerText = "Выиграли нолики"
+                break
+        }
+        const resultElement = document.getElementById("result")
+        const repeatButton = document.createElement("button")
+        repeatButton.innerText = "Играть еще раз"
+        repeatButton.addEventListener("click", () => {
+            source.reset()
+            resultElement.innerHTML = ""
+        })
+        resultElement.appendChild(winnerText)
+        resultElement.appendChild(repeatButton)
+    }
+
+    /**
+     * Обработчик события изменения состояния ячейки игрового поля
+     * */
+    const buttonMap = new Map()
+    function updateView(event) {
+        const {fieldCell} = event
+        const cellHash = `${fieldCell.getY()}-${fieldCell.getX()}`
+        if (!buttonMap.has(cellHash)) {
+            const htmlCell = document.createElement("div")
+            htmlCell.classList.add("field-cell")
+            htmlCell.addEventListener("mousedown", () => fieldCell.click())
+            document.getElementById("field").appendChild(htmlCell)
+            buttonMap.set(cellHash, htmlCell)
+        }
+        const uiElement = buttonMap.get(cellHash)
+        switch (fieldCell.getState()) {
+            case PlayerType.NONE:
+                uiElement.innerHTML = ""
+                break
+            case PlayerType.CROSS:
+                uiElement.innerHTML = crossSVG
+                break
+            case PlayerType.ZERO:
+                uiElement.innerHTML = circleSymbol
+                break
+        }
+    }
+
+    /**
+     * Теперь просто создаем игру
+     * */
+    const game = new Game()
+    /**
+     * Подписываемся на события
+     * */
+    game.on(GameEventType.GAME_OVER, gameOver)
+    game.on(GameEventType.CHANGE_CELL, updateView)
+    /**
+     * И запускаем
+     * */
+    game.play()
+</script>
+</body>
+</html>

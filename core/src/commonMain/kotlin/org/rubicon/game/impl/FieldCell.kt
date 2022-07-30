@@ -25,8 +25,10 @@ class FieldCell(
     }
 
     override fun click() {
-        // Мы кинем событие, что пользователь кликнул
-        this.emit(Event(FieldCellEvents.CLICK, this))
+        // Мы кинем событие, что пользователь кликнул только если уже не кликнуто раньше
+        if (this.state == PlayerType.NONE) {
+            this.emit(Event(FieldCellEvents.CLICK, this))
+        }
     }
 
     override fun getState(): PlayerType = this.state

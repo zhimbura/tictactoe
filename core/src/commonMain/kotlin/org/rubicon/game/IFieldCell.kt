@@ -1,10 +1,12 @@
 package org.rubicon.game
 
 import org.rubicon.game.impl.PlayerType
+import kotlin.js.JsExport
 
 /**
  * Элемент игрового где должны отображаться крестики и нолики
  * */
+@JsExport
 interface IFieldCell {
     /**
      * При клике меняется состояние кнопки на состояние активного игрока

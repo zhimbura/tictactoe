@@ -26,15 +26,16 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
     }
 
     private fun onClickFieldCell(event: IEvent<FieldCellEvents, FieldCell>) {
-        val fieldCell: FieldCell = event.source
-        this.changeFiledCellState(fieldCell, playerType)
-        this.turnMove()
-        this.checkGameOver()
-
+        if (this.playerType != PlayerType.NONE) {
+            val fieldCell: FieldCell = event.source
+            this.changeFiledCellState(fieldCell, playerType)
+            this.turnMove()
+            this.checkGameOver()
+        }
     }
 
     private fun changeFiledCellState(fieldCell: FieldCell, state: PlayerType) {
-        fieldCell.changeState(playerType)
+        fieldCell.changeState(state)
         this.emit(GameCellEvent(this, fieldCell))
     }
 
@@ -47,10 +48,15 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
     }
 
     private fun checkGameOver() {
-        val winLine = this.winConditions.find { this.equalsRow(it) }
-        when {
-            winLine != null -> this.emit(GameOverEvent(this, winLine))
-            !hasFreeCells() -> this.emit(GameOverEvent(this))
+        val winLine = this.winConditions.find { this.isMatchLine(it) }
+        val event = when {
+            winLine != null -> GameOverEvent(this, winLine)
+            !hasFreeCells() -> GameOverEvent(this)
+            else -> null
+        }
+        if(event != null) {
+            this.playerType = PlayerType.NONE
+            this.emit(event)
         }
     }
 
@@ -60,9 +66,10 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
         }
     }
 
-    private fun equalsRow(row: List<FieldCell>): Boolean {
+    private fun isMatchLine(row: List<FieldCell>): Boolean {
         if (row.isEmpty()) return false
         val firstState = row.first().getState()
+        if (firstState == PlayerType.NONE) return false
         return row.all { it.getState() == firstState }
     }
 
@@ -102,6 +109,7 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
     }
 
     override fun reset() {
+        this.playerType = PlayerType.CROSS
         for (y in 0 until this.field.size) {
             for (x in 0 until this.field[y].size) {
                 this.changeFiledCellState(this.field[y][x], PlayerType.NONE)
