@@ -822,3 +822,23 @@ index.js
 
 #### Реализация на Swift
 
+Прежде чем создавать приложение нужно скомпилировать и собрать наш Kotlin код в Framework с которым будет дружить Xcode, давайте этим и займемся. 
+
+```bash
+./gradlew linkReleaseFrameworkIosArm64 linkReleaseFrameworkIosX64 &&
+xcodebuild -create-xcframework \
+    -framework ./core/build/bin/iosArm64/releaseFramework/GAMEFramework.framework \
+    -framework ./core/build/bin/iosX64/releaseFramework/GAMEFramework.framework \
+    -output ./core/build/bin/core.xcframework
+```
+
+Полученный в итоге сборки фреймворк нужно будет добавить в созданное ios приложение, чтобы получить возможность использовать классы написанные на kotlin в swift приложении.
+
+Теперь можем перейти к реализации приложения на swift для этого создадим простое iOS приложение.
+
+![newiosapp.png](images/newiosapp.png)
+
+Соответственно указываем название приложение и наименование организации
+
+![iosnexttab.png](images/iosnexttab.png)
+

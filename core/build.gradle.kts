@@ -15,9 +15,28 @@ kotlin {
         browser()
         nodejs()
     }
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+
+    iosX64 {
+        binaries {
+            framework {
+                baseName = "GAMEFramework"
+            }
+        }
+    }
+    iosArm64 {
+        binaries {
+            framework {
+                baseName = "GAMEFramework"
+            }
+        }
+    }
+    iosSimulatorArm64{
+        binaries {
+            framework {
+                baseName = "GAMEFramework"
+            }
+        }
+    }
 
     sourceSets {
         /* Main source sets */
