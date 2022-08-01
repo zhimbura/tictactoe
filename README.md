@@ -182,7 +182,7 @@ kotlin.mpp.enableCInteropCommonization=true
 
 После того как все готово можно приступать к написанию кода. В основном код будет писаться в **commonMain** и там будут располагаться классы которые потом будут использоваться уже на платформах где будет запускаться наша игра.
 
-По задуманной логике обновление представление должно происходить по событию, а это значить нужно создать класс который будет уметь принимать слушателей и уметь кидать события, этот класс назовем **EventEmitter** а его интерфейс **IEventEmitter**.
+По задуманной логике обновление представление должно происходить по событию, а это значит нужно создать класс который будет уметь принимать слушателей и уметь кидать события, этот класс назовем **EventEmitter** а его интерфейс **IEventEmitter**.
 
 Но события в нашей модели тоже должны нести некоторую информацию, например если представление подпишется на изменение состояния поля, при срабатывании подписки одно должно знать где именно был поставлен крестик или нолик. Поэтому сначала объявим **IEvent** и реализуем его имплементацию **Event**.
 
@@ -232,7 +232,7 @@ open class Event<T: Enum<T>, S>(
 
 После реализации события можем перейти к объявлению **IEventEmitter** и его реализации **EventEmitter**.
 
-В объявлении **IEventEmitter** используется 3 обобщенных типа
+В объявлении **IEventEmitter** используется 2 обобщенных типа
 
 - T - это тип события, который может быть только перечисляемым типом
 - S - это источник события
@@ -1000,4 +1000,79 @@ struct ContentView_Previews: PreviewProvider {
 приложений под Android как [объявил Google](https://developer.android.com/kotlin/first) в 2019 году, 
 но мы напишем на Java, чтобы продемонстрировать как наш SDK с ней дружит.
 
+Для JVM сборок нам нужен *.jar файл который мы могли бы подключить в проект, получить его можно выполнив команду 
+```bash
+./gradlew jvmJar
+```
+
+В итоге в папке *core/libs* будет библиотека **core-jvm-1.0.0.jar** которую нужно будет в дальнейшем подключить в приложение.
+
+![jar-result.png](images/jar-result.png)
+
+
+Делать конечно же будем в Android Studio.
+Соответственно выбираем создать новый проект и выбираем создать **Empty Activity**  
+
+
+![empty-activity.png](images/empty-activity.png)
+
+
+![android-start.png](images/android-start.png)
+
+А дальше как везде при работе с любой программой далее далее длаее ждем 
+
+Открываем *build.gradle* модуля (если переключиться в отображения проекта как проект будет в папке *app*) и добавляем зависимость.
+
+by Project *app/build.gradle* или by Android *Gradle Scripts/build.gradle(Module: YourAppName.app)* где YourAppName это название вашего приложения
+
+```groovy
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    compileSdk 32
+
+    defaultConfig {
+        applicationId "com.example.tictactoe"
+        minSdk 29
+        targetSdk 32
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    // Добавляем зависимость на наш SDK полученный ранее
+    implementation files('../../../core/build/libs/core-jvm-1.0.0.jar')
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.7.10'
+
+    implementation 'androidx.appcompat:appcompat:1.3.0'
+    implementation 'com.google.android.material:material:1.4.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation files('../core/build/libs/')
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+}
+```
+
+Обновляем зависимости
+
+```bash
+gradle --refresh-dependencies
+```
 

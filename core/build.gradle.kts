@@ -5,10 +5,10 @@ plugins {
 
 kotlin {
     jvm {
-//        compilations.all {
-//            kotlinOptions.jvmTarget = "1.8"
-//        }
-//        withJava()
+        compilations.all {
+            kotlinOptions.jvmTarget = "1.8"
+        }
+        withJava()
     }
     js(IR) {
         binaries.executable()
