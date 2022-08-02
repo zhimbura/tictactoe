@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">TicTacToe</string>
     <string name="play">Play</string>
+    <string name="play_again">Play Again</string>
 </resources>

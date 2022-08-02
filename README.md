@@ -1076,3 +1076,282 @@ dependencies {
 gradle --refresh-dependencies
 ```
 
+```java
+package com.example.tictactoe;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import org.rubicon.game.impl.FieldCell;
+import org.rubicon.game.impl.Game;
+import org.rubicon.game.impl.events.GameCellEvent;
+import org.rubicon.game.impl.events.GameEventType;
+import org.rubicon.game.impl.events.GameOverEvent;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
+
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
+
+public class MainActivity extends AppCompatActivity {
+    final private Game game = new Game();
+    final private LinkedHashMap<String, Button> uiButtons = new LinkedHashMap<>();
+
+    Function1 onGameOver = o -> {
+        final GameOverEvent event = (GameOverEvent) o;
+        final TextView textView = findViewById(R.id.textWinner);
+        String winnerMessage = "";
+        switch (event.getWinner()) {
+            case NONE:
+                winnerMessage = "Ничья";
+                break;
+            case ZERO:
+                winnerMessage = "Выиграли O";
+                break;
+            case CROSS:
+                winnerMessage = "Выиграли X";
+                break;
+        }
+        textView.setText(winnerMessage);
+        textView.setVisibility(View.VISIBLE);
+        findViewById(R.id.buttonPlayAgain).setVisibility(View.VISIBLE);
+        return Unit.INSTANCE;
+    };
+
+    Function1 onGameCellChange = o -> {
+        final GameCellEvent event = (GameCellEvent) o;
+        Log.d("GAME", event.getFieldCell().getX() + " " + event.getFieldCell().getY());
+        final FieldCell fieldCell = event.getFieldCell();
+        final String hash = makeHash(fieldCell.getX(), fieldCell.getY());
+        final Button uiButton = this.uiButtons.get(hash);
+        if (uiButton == null) {
+            return Unit.INSTANCE;
+        }
+        if (!uiButton.hasOnClickListeners()) {
+            uiButton.setOnClickListener(view -> {
+                fieldCell.click();
+            });
+        }
+        switch (event.getFieldCell().getState()) {
+            case NONE:
+                uiButton.setText("");
+                break;
+            case ZERO:
+                uiButton.setText("O");
+                break;
+            case CROSS:
+                uiButton.setText("X");
+                break;
+        }
+        return Unit.INSTANCE;
+    };
+
+    @NonNull
+    private String makeHash(int x, int y) {
+        return String.format("%s-%s", x, y);
+    }
+
+    private void collectButtons() {
+        final LinearLayout rowLayout = findViewById(R.id.fieldLinearLayout);
+        for (int y = 0; y < rowLayout.getChildCount(); y++) {
+            final View child = rowLayout.getChildAt(y);
+            final LinearLayout cellLayout = child instanceof LinearLayout ? (LinearLayout) child : null;
+            if (cellLayout == null) {
+                continue;
+            }
+            for (int x = 0; x < cellLayout.getChildCount(); x++) {
+                final View subChild = cellLayout.getChildAt(x);
+                final Button button = subChild instanceof Button ? (Button) subChild : null;
+                if (button != null) {
+                    uiButtons.put(makeHash(x, y), button);
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        this.collectButtons();
+
+        final Button buttonPlay = findViewById(R.id.buttonPlay);
+        buttonPlay.setOnClickListener(v -> {
+            game.on(GameEventType.GAME_OVER, onGameOver);
+            game.on(GameEventType.CHANGE_CELL, onGameCellChange);
+            game.play();
+            buttonPlay.setVisibility(View.INVISIBLE);
+            findViewById(R.id.fieldLinearLayout).setVisibility(View.VISIBLE);
+        });
+
+        final Button buttonPlayAgain = findViewById(R.id.buttonPlayAgain);
+        buttonPlayAgain.setOnClickListener(v -> {
+            findViewById(R.id.textWinner).setVisibility(View.INVISIBLE);
+            game.reset();
+            buttonPlayAgain.setVisibility(View.INVISIBLE);
+        });
+    }
+}
+```
+
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:id="@+id/mainLinearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/fieldLinearLayout"
+            android:visibility="invisible"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/button16"
+                    android:backgroundTint="@color/purple_200"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:textSize="64sp" />
+
+                <Button
+                    android:id="@+id/button17"
+                    android:backgroundTint="@color/purple_200"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:textSize="64sp" />
+
+                <Button
+                    android:id="@+id/button18"
+                    android:backgroundTint="@color/purple_200"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:textSize="64sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/button19"
+                    android:backgroundTint="@color/purple_200"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:textSize="64sp" />
+
+                <Button
+                    android:id="@+id/button20"
+                    android:backgroundTint="@color/purple_200"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:textSize="64sp" />
+
+                <Button
+                    android:id="@+id/button21"
+                    android:backgroundTint="@color/purple_200"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:textSize="64sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/button22"
+                    android:backgroundTint="@color/purple_200"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:textSize="64sp" />
+
+                <Button
+                    android:id="@+id/button23"
+                    android:backgroundTint="@color/purple_200"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:textSize="64sp" />
+
+                <Button
+                    android:id="@+id/button24"
+                    android:backgroundTint="@color/purple_200"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:textSize="64sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+
+        <Button
+            android:id="@+id/buttonPlay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/play" />
+
+        <TextView
+            android:id="@+id/textWinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            android:textSize="32sp"
+            android:visibility="invisible" />
+
+        <Button
+            android:id="@+id/buttonPlayAgain"
+            android:visibility="invisible"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/play_again" />
+
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+
+![android-result.gif](images/android-result.gif)
