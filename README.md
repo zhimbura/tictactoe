@@ -19,7 +19,7 @@
 работой этого SDK вы можете столкнуться в личном кабинете на сайте и мобильном приложении, или когда придете в офис
 продаж, где человек который будет настраивать вам что-либо, будет делать это средствами SDK.
 
-![flexible-package](images\flexible-package.png)
+![flexible-package](images/flexible-package.png)
 
 ## Почему именно Kotlin Multiplatform
 
@@ -44,7 +44,7 @@ C/С++ с подключением библиотеки под мобилки и
 
 Судя по официальной документации Kotlin Multiplatform находится в состоянии Alpha
 
-![image-20220804005914342](images\kotlin-alpha.png)
+![image-20220804005914342](images/kotlin-alpha.png)
 
 ## Идея
 
