@@ -1,21 +1,22 @@
 plugins {
     kotlin("multiplatform")
-    kotlin("plugin.serialization")
 }
 
 kotlin {
+    /* JVM Target Configuration */
     jvm {
         compilations.all {
             kotlinOptions.jvmTarget = "1.8"
         }
         withJava()
     }
+    /* JS Target Configuration */
     js(IR) {
         binaries.executable()
         browser()
         nodejs()
     }
-
+    /* iOS Target Configuration */
     iosX64 {
         binaries {
             framework {
@@ -40,11 +41,7 @@ kotlin {
 
     sourceSets {
         /* Main source sets */
-        val commonMain by getting {
-            dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
-            }
-        }
+        val commonMain by getting
         val jvmMain by getting
         val jsMain by getting
         val iosMain by creating

@@ -3,9 +3,12 @@ package com.example.tictactoe;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -24,12 +27,15 @@ import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
 public class MainActivity extends AppCompatActivity {
+    // Сразу создаем экземпляр игры при создании объекта
     final private Game game = new Game();
+    // Здесь сохраним кнопки чтобы было удобнее к ним обращаться и менять значение
     final private LinkedHashMap<String, Button> uiButtons = new LinkedHashMap<>();
 
-    Function1 onGameOver = o -> {
+    // Подписка на окончание игры
+    final Function1 onGameOver = o -> {
+        // Получаем информацию о победителе
         final GameOverEvent event = (GameOverEvent) o;
-        final TextView textView = findViewById(R.id.textWinner);
         String winnerMessage = "";
         switch (event.getWinner()) {
             case NONE:
@@ -42,17 +48,21 @@ public class MainActivity extends AppCompatActivity {
                 winnerMessage = "Выиграли X";
                 break;
         }
+        // Отображаем на экране
+        final TextView textView = findViewById(R.id.textWinner);
         textView.setText(winnerMessage);
         textView.setVisibility(View.VISIBLE);
         findViewById(R.id.buttonPlayAgain).setVisibility(View.VISIBLE);
         return Unit.INSTANCE;
     };
 
-    Function1 onGameCellChange = o -> {
+    // Подписка на изменение состояния ячейки игрового поля
+    final Function1 onGameCellChange = o -> {
+        // Получаем информацию о ячейке
         final GameCellEvent event = (GameCellEvent) o;
-        Log.d("GAME", event.getFieldCell().getX() + " " + event.getFieldCell().getY());
         final FieldCell fieldCell = event.getFieldCell();
         final String hash = makeHash(fieldCell.getX(), fieldCell.getY());
+        // Далее обновляем соответввующую кнопку
         final Button uiButton = this.uiButtons.get(hash);
         if (uiButton == null) {
             return Unit.INSTANCE;
@@ -81,21 +91,26 @@ public class MainActivity extends AppCompatActivity {
         return String.format("%s-%s", x, y);
     }
 
-    private void collectButtons() {
+    // Создаем игровое поле
+    private void createButtons() {
         final LinearLayout rowLayout = findViewById(R.id.fieldLinearLayout);
-        for (int y = 0; y < rowLayout.getChildCount(); y++) {
-            final View child = rowLayout.getChildAt(y);
-            final LinearLayout cellLayout = child instanceof LinearLayout ? (LinearLayout) child : null;
-            if (cellLayout == null) {
-                continue;
+        for (int y = 0; y < 3; y++) {
+            final LinearLayout row = new LinearLayout(this);
+            for (int x = 0; x < 3; x++) {
+                final Button button = new Button(this);
+                button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 64);
+                row.addView(button, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        1.0f
+                ));
+                // Сохраняем ссылку на кнопку для более простого поиска в дальнейшем
+                uiButtons.put(makeHash(x, y), button);
             }
-            for (int x = 0; x < cellLayout.getChildCount(); x++) {
-                final View subChild = cellLayout.getChildAt(x);
-                final Button button = subChild instanceof Button ? (Button) subChild : null;
-                if (button != null) {
-                    uiButtons.put(makeHash(x, y), button);
-                }
-            }
+            rowLayout.addView(row, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
         }
     }
 
@@ -104,8 +119,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        this.collectButtons();
+        // Создаем поле
+        this.createButtons();
 
+        // По клику запуска подписываеся на события игры и запускаем игру
         final Button buttonPlay = findViewById(R.id.buttonPlay);
         buttonPlay.setOnClickListener(v -> {
             game.on(GameEventType.GAME_OVER, onGameOver);
@@ -115,6 +132,7 @@ public class MainActivity extends AppCompatActivity {
             findViewById(R.id.fieldLinearLayout).setVisibility(View.VISIBLE);
         });
 
+        // По клику кнопки играть опять перезапускаем игру
         final Button buttonPlayAgain = findViewById(R.id.buttonPlayAgain);
         buttonPlayAgain.setOnClickListener(v -> {
             findViewById(R.id.textWinner).setVisibility(View.INVISIBLE);

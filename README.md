@@ -1,50 +1,93 @@
 # Выходим за пределы JVM
 
-Изначально я хотел описать свой рабочий проект, но кому будет интересна бизнес логика непонятного проекта, поэтому я решил написать простую игру с платформонезависимым сервером и клиентом на [Kotlin Multiplatform](https://kotlinlang.org/docs/multiplatform.html) и запустить ее в браузере, android приложении, ios приложении и может на desctop. 
+Какой есть общий недостаток у мобильной разработки, front-end разработки и back-end разработки и иногда распила
+микросервисов? Дублирование логики, очень часто видел стати или новости, где одна команда мобильных разработчиков ждет
+другую, чтобы выкатить релиз. И если с мобильными более менее все понятно и есть решения, но что делать с браузером?
+Очень часто логику работы приложения так же нужно поддержать и там. Но что делать если хочется писать нативный код и при
+этом не иметь дублей реализаций? На этот вопрос я постараюсь ответить подробно в данной статье, в процессе чтения
+которой можно будет познакомиться с технологией Kotlin Multiplatform и создать полноценный проект всем известной игры
+Крестики-Нолики на трех самых популярных платформах, таких как JS, iOS, Java с общей логикой на Kotlin.
 
+## Об авторе
 
+Для начала нужно наверное представиться, чтобы было понимание, что я ~~повидал некоторого дерьма~~ накопил некоторый
+опыт работы с технологией о которой пишу. Итак, начнем, меня зовут Устинов Тихон и работаю
+я [Ростелеком ИТ](https://rtkit.ru/) (дочерняя компания Ростелеком, попрошу не путать), а если быть точнее на проекте
+Интеграция [ЕПК](https://rtkit.ru/products/edinii-produktovii-katalog). И c помощью нашего проекта прошлом году
+Ростелеком запустил проект Гибких пакетов. Где мы разработали SDK который обрабатывает всю бизнес логику от
+конфигурирования до просчета цены. Скриншот ниже это пример как одна из витрин отображает работу этого SDK. Так же с
+работой этого SDK вы можете столкнуться в личном кабинете на сайте и мобильном приложении, или когда придете в офис
+продаж, где человек который будет настраивать вам что-либо, будет делать это средствами SDK.
+
+![flexible-package](images\flexible-package.png)
+
+## Почему именно Kotlin Multiplatform
+
+Перед тем как выбрать Kotlin Multiplatform мы рассматривали все возможные варианты позволяющие решить проблему запуска
+одного кода в браузере и на телефонах, запуск кода на сервере оказался итоговым приятным бонусом. И если рассматривать
+проблему ограничиваясь мобильными устройствами и браузером, первое что приходит в голову это **React Native** и **
+Progressive Web Applications (PWA)**, но мы уже имели некоторую базы нативных приложений от которых не хотелось
+отказываться, и webview выглядел тоже не лучшим вариантом. Так же причина наличия нативных приложений отмела идею
+написать на flutter, который помимо запуска на ios и android дает возможность скомпилировать код в js. Наличие нативных
+приложений сократило наш выбор до двух вариантов C/C++ библиотека с подключением к нативным приложениям и к js как
+webassembly и неизвестный тогда Kotlin Multiplatform. Честно говоря, отсутствие специалистов по C/C++ сократило наши
+варианты до одного, и как вы уже поняли это оказался Kotlin Multiplatform. Но сразу скажу что ни разу не пожалели об
+этом выборе.
+
+**TODO продолжить отсюда**
+
+но как правило у нас есть некоторый API или какие-либо сервисы в которых возможно тоже нужно переиспользовать некоторую
+логику. И если этот API и эти сервисы написаны не на JS, а к примеру на любом jvm языке, то выбора остается около двух,
+C/С++ с подключением библиотеки под мобилки и сервисы и WebAssembly для JS. Честно говоря звучит страшно, поэтому было
+выбрано последний оставшийся вариант Kotlin с его технологией Kotlin Multiplatform. И заранее забегу вперед, ни разу не
+пожалели что выбрали именно этот вариант.
+
+Судя по официальной документации Kotlin Multiplatform находится в состоянии Alpha
+
+![image-20220804005914342](images\kotlin-alpha.png)
 
 ## Идея
 
-Для реализации самой идеи платформонезависимый игры и идея самой игры должна быть простая. Поэтому за идею возьмем всем знакомые крестики-нолики, напишем их на Kotlin и запустим на самых популярных платформах Android, iOS, Браузер с кодом платформы только для отрисовки представления.
+Для реализации самой идеи платформно-независимый игры и идея самой игры должна быть простая. Поэтому за идею возьмем
+всем знакомые крестики-нолики, напишем их на Kotlin и запустим на самых популярных платформах Android, iOS, Браузер с
+кодом платформы только для отрисовки представления.
 
-**// TODO  Android, iOS, Браузер дубль**
-
-
+**// TODO Android, iOS, Браузер дубль**
 
 ## Создание проекта
 
 #### Окружение
 
-Для начала работы с Kotlin Multiplatform желательно проверить все необходимое окружение с помощью утилиты [KDoctor](https://github.com/Kotlin/kdoctor). После того как проверили и все есть можно смело начинать делать проект. Для корректно работы результат проверки должен быть приблизительно таким.
+Для начала работы с Kotlin Multiplatform желательно проверить все необходимое окружение с помощью
+утилиты [KDoctor](https://github.com/Kotlin/kdoctor). После того как проверили и все есть можно смело начинать делать
+проект. Для корректно работы результат проверки должен быть приблизительно таким.
 
-![image-20220718220616214](images/environment.png)
+![image-20220718220616214](images/environment.jpg)
 
-Вы можете использовать любое удобное для вас окружение, но помните что, чтобы разрабатывать под iOS с использованием Kotlin Multiplatform нужен Command Line Tools (обычно ставится при установки xcode), и по политики Apple данный набор инструментов можно установить только на продукцию Apple. Ну или может быть на  Hackintosh тоже получится, я не пробовал.
-Скачать Command Line Tools можно с [официального сайта Apple для разработчиков](https://developer.apple.com/download/all/).
-
-
+Вы можете использовать любое удобное для вас окружение, но помните что, чтобы разрабатывать под iOS с использованием
+Kotlin Multiplatform нужен Command Line Tools (обычно ставится при установке xcode), и по политики Apple данный набор
+инструментов можно установить только на продукцию Apple. Ну или может быть на Hackintosh тоже получится, я не пробовал.
+Скачать Command Line Tools можно
+с [официального сайта Apple для разработчиков](https://developer.apple.com/download/all/).
 
 #### Создание проекта
 
-Далее для создания проекта можно воспользоваться [Kotlin Multiplatform Wizard](https://terrakok.github.io/kmp-web-wizard/).
+Далее для создания проекта можно
+воспользоваться [Kotlin Multiplatform Wizard](https://terrakok.github.io/kmp-web-wizard/).
 
 - Выбираем текущую стабильную версию Kotlin
 - Для целевых сборок выбираем **JVM**, **JS**, **iOS** (если что-то то будет еще потом можно будет добавить)
-- Среди библиотек выбираем **KotlinX Serialization** - для возможности сериализовать и десериализовать DTO
-- Тесты включаем
-
-**//TODO Сериализация может не понадобиться **
+- Тесты включаем **TODO**
 
   Должна получиться приблизительно такая конфигурация.
 
-![wizard](images/wizard.png)
+![wizard](images\wizard.jpg)
 
+Далее скачиваем и разархивируем в вашу рабочую область. И открываем в вашей любимой IDE, но лучше использовать IntelliJ
+IDEA, так как в ней есть некоторые вспомогательные функции для работы с Kotlin Multiplatform, например при создании
+классов которые будут реализованы под каждую платформу ide поможет сгенерировать эти классы.
 
-
-Далее скачиваем и разархивируем в вашу рабочую область. И открываем в вашей любимой IDE, но лучше использовать IntelliJ IDEA, так как в ней есть некоторые вспомогательные функции для работы с Kotlin Mitiplatform,  например при создании классов которые будут реализованы под каждую платформу ide поможет сгенерировать эти классы.
-
-После того как вы открыли проект у вас должна быть такая структура проекта с первоначальным кодом. 
+После того как вы открыли проект у вас должна быть такая структура проекта с первоначальным кодом.
 
 ```text
 - commonMain
@@ -81,20 +124,16 @@
       - PlatformTest
 ```
 
+Файлы Platform.kt, CommonTest, PlatformTest сразу удалим так как они нам не понадобятся. И по итогу должна получиться
+вот такая структура проекта.
 
-
-
-Файлы Platform.kt, CommonTest, PlatformTest сразу удалим так как они нам не понадобятся. И по итогу должна получиться вот такая структура проекта.
-
-![project-tree](images/project-tree.png)
-
-
+![project-tree](images/project-tree.jpg)
 
 #### Настройка сборки
 
 Для начала в файле *./settings.gradle.kts* явно укажем версию kotlin multiplatform.
 
-  *./settings.gradle.kts*
+*./settings.gradle.kts*
 
 ```kotlin
 pluginManagement {
@@ -113,41 +152,110 @@ rootProject.name = "tictactoe"
 include(":core")
 ```
 
-
-
 И добавим пару строчек в свойства сборки.
 
 *./gradle.properties*
 
 ```properties
-# Добавляем группу и версию остальное оставляем без зменений
+# Добавляем группу и версию остальное оставляем без изменений
 group=ru.tikhon.tictactoe
 version=1.0.0
-
 # Остальное можно оставить так как есть
 #Gradle
 org.gradle.jvmargs=-Xmx2048M -Dkotlin.daemon.jvm.options\="-Xmx2048M"
-
 #Kotlin
 kotlin.code.style=official
-
 #MPP
 kotlin.mpp.enableCInteropCommonization=true
 ```
 
-
-
-Далее идем настраивать параметры сборки под конкретный платформы в файле *./core/build.gradle.kts*.
+Далее идем настраивать параметры сборки под для конкретных платформ в файле *./core/build.gradle.kts*.
 
 *./core/build.gradle.kts*
 
-**//TODO добавить по завершению проекта** 
+```kotlin
+plugins {
+    kotlin("multiplatform")
+}
 
+kotlin {
+    /* JVM Target Configuration */
+    jvm {
+        compilations.all {
+            kotlinOptions.jvmTarget = "1.8"
+        }
+        withJava()
+    }
+    /* JS Target Configuration */
+    js(IR) {
+        binaries.executable()
+        browser()
+        nodejs()
+    }
+    /* iOS Target Configuration */
+    iosX64 {
+        binaries {
+            framework {
+                baseName = "GAMEFramework"
+            }
+        }
+    }
+    iosArm64 {
+        binaries {
+            framework {
+                baseName = "GAMEFramework"
+            }
+        }
+    }
+    iosSimulatorArm64 {
+        binaries {
+            framework {
+                baseName = "GAMEFramework"
+            }
+        }
+    }
 
+    sourceSets {
+        /* Main source sets */
+        val commonMain by getting
+        val jvmMain by getting
+        val jsMain by getting
+        val iosMain by creating
+        val iosX64Main by getting
+        val iosArm64Main by getting
+        val iosSimulatorArm64Main by getting
 
+        /* Main hierarchy */
+        jvmMain.dependsOn(commonMain)
+        jsMain.dependsOn(commonMain)
+        iosMain.dependsOn(commonMain)
+        iosX64Main.dependsOn(iosMain)
+        iosArm64Main.dependsOn(iosMain)
+        iosSimulatorArm64Main.dependsOn(iosMain)
 
+        /* Test source sets */
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
+        val jvmTest by getting
+        val jsTest by getting
+        val iosTest by creating
+        val iosX64Test by getting
+        val iosArm64Test by getting
+        val iosSimulatorArm64Test by getting
 
-
+        /* Test hierarchy */
+        jvmTest.dependsOn(commonTest)
+        jsTest.dependsOn(commonTest)
+        iosTest.dependsOn(commonTest)
+        iosX64Test.dependsOn(iosTest)
+        iosArm64Test.dependsOn(iosTest)
+        iosSimulatorArm64Test.dependsOn(iosTest)
+    }
+}
+```
 
 ## Написание кода
 
@@ -156,35 +264,37 @@ kotlin.mpp.enableCInteropCommonization=true
 Для работы мультиплатформенности наш код должен удовлетворять следующим характеристикам:
 
 - Должен быть полный набор классов необходимый для реализации игры
-- Этот набор классов не должен зависеть от какой либо платформы
+- Этот набор классов не должен зависеть от какой-либо платформы
 
 Логика работы должна быть приблизительно такая:
 
 1) Пользователь кликает кнопку играть
 2) Создается экземпляр GameBuilder из SDK
 3) Заполняются необходимые данные для построения игры (могут быть имена игроков)
-4) У экземпляра объекта GameBuilder вызывается метод build 
-5) SDK создает экземпляра класса Game и возвращает ее на сторону платформы 
-6) На стороне платформы создаются подписки на обновления (начало игры, конец игры, смена хода, отрисовка крестиков и ноликов)
-7) У экземпляра Game вызывается метод start 
+4) У экземпляра объекта GameBuilder вызывается метод build
+5) SDK создает экземпляра класса Game и возвращает ее на сторону платформы
+6) На стороне платформы создаются подписки на обновления (начало игры, конец игры, смена хода, отрисовка крестиков и
+   ноликов)
+7) У экземпляра Game вызывается метод start
 8) SDK кидает события чтобы платформа отрисовала нужные UI элементы
 9) И начинается игра
 
-**//TODO Подправить схему**
-
-![relationships-logic](images/relationships-logic.png)
-
-
+![relationships-logic](images\relationships-logic.jpg)
 
 ## Код
 
 ### Реализация SDK
 
-После того как все готово можно приступать к написанию кода. В основном код будет писаться в **commonMain** и там будут располагаться классы которые потом будут использоваться уже на платформах где будет запускаться наша игра.
+После того как все готово можно приступать к написанию кода. В основном код будет писаться в **commonMain** и там будут
+располагаться классы которые потом будут использоваться уже на платформах где будет запускаться наша игра.
 
-По задуманной логике обновление представление должно происходить по событию, а это значит нужно создать класс который будет уметь принимать слушателей и уметь кидать события, этот класс назовем **EventEmitter** а его интерфейс **IEventEmitter**.
+По задуманной логике обновление представление должно происходить по событию, а это значит нужно создать класс который
+будет уметь принимать слушателей и уметь кидать события, этот класс назовем **EventEmitter** а его интерфейс **
+IEventEmitter**.
 
-Но события в нашей модели тоже должны нести некоторую информацию, например если представление подпишется на изменение состояния поля, при срабатывании подписки одно должно знать где именно был поставлен крестик или нолик. Поэтому сначала объявим **IEvent** и реализуем его имплементацию **Event**.
+Но события в нашей модели тоже должны нести некоторую информацию, например если представление подпишется на изменение
+состояния поля, при срабатывании подписки одно должно знать где именно был поставлен крестик или нолик. Поэтому сначала
+объявим **IEvent** и реализуем его имплементацию **Event**.
 
 interface *core/src/commonMain/kotlin/org/rubicon/game/IEvent.kt*
 
@@ -224,7 +334,7 @@ import org.rubicon.game.IEvent
 import kotlin.js.JsExport
 
 @JsExport
-open class Event<T: Enum<T>, S>(
+open class Event<T : Enum<T>, S>(
     override val type: T,
     override val source: S
 ) : IEvent<T, S>
@@ -322,12 +432,14 @@ abstract class EventEmitter<T : Enum<T>, S> : IEventEmitter<T, S> {
 }
 ```
 
-Теперь простым наследованием мы можем научить любой класс кидать события и можем перейти к созданию главного класса игры **Game**. Так как наш класс должен должен быть наследником **EventEmitter** а он требует указания перечисления событий то сделаем это, создадим перечисление событий игры.
+Теперь простым наследованием мы можем научить любой класс кидать события и можем перейти к созданию главного класса
+игры **Game**. Так как наш класс должен быть наследником **EventEmitter** а он требует указания перечисления событий то
+сделаем это, создадим перечисление событий игры.
 
-Соответственно события которые могут возникнуть во время игры 
+Соответственно события которые могут возникнуть во время игры
 
 - окончание игры когда какая-то сторона выиграла или не осталось ходов
-- событие изменения ячейки игрового поля, когда там будут ставит крестики или нолики
+- событие изменения ячейки игрового поля, когда там будут ставить крестики или нолики
 
 enum *core/src/commonMain/kotlin/org/rubicon/game/impl/events/GameEventType.kt*
 
@@ -345,6 +457,7 @@ enum class GameEventType {
      * Игра окончена
      * */
     GAME_OVER,
+
     /**
      * Изменилось состояние поля
      * */
@@ -352,7 +465,8 @@ enum class GameEventType {
 }
 ```
 
-Теперь у нас есть все, чтобы объявить интерфейс **IGame** и указать методы которые можно будет вызывать на стороне представления.
+Теперь у нас есть все, чтобы объявить интерфейс **IGame** и указать методы которые можно будет вызывать на стороне
+представления.
 
 interface *core/src/commonMain/kotlin/org/rubicon/game/IGame.kt*
 
@@ -385,11 +499,9 @@ interface IGame : IEventEmitter<GameEventType, IGame> {
 Но для непосредственной реализации нам не хватает еще четырех сущностей
 
 - **PlayerType** перечисляемый класс обозначающий игрока, крестик, нолик или его отсутствие
-- **IFieldCell** элемент который будет отвечать за квадратик с крестиком или ноликом на игровом поле
+- **IFieldCell** элемент, который будет отвечать за квадратик с крестиком или ноликом на игровом поле
 - **GameCellEvent** событие изменения состояния ячейки игрового поля с указанием этой самой ячейки
 - **GameOverEvent** событие окончания с указанием победителя
-
- 
 
 enum *core/src/commonMain/kotlin/org/rubicon/game/impl/PlayerType.kt*
 
@@ -407,10 +519,12 @@ enum class PlayerType {
      * Игрок отсутствует
      * */
     NONE,
+
     /**
      * Игрок, который играет крестиками
      * */
     CROSS,
+
     /**
      * Игрок, который играет ноликами
      * */
@@ -534,7 +648,8 @@ class GameOverEvent(
 }
 ```
 
-И теперь можем перейти к последнему классу в SDK **Game** и реализовать его. В этом классе будет основная логика игры такая как проверка победы, изменение состояний **FieldCell** и создание событий об изменении этих состояний.
+И теперь можем перейти к последнему классу в SDK **Game** и реализовать его. В этом классе будет основная логика игры
+такая как проверка победы, изменение состояний **FieldCell** и создание событий об изменении этих состояний.
 
 class *core/src/commonMain/kotlin/org/rubicon/game/impl/Game.kt*
 
@@ -595,7 +710,7 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
             !hasFreeCells() -> GameOverEvent(this)
             else -> null
         }
-        if(event != null) {
+        if (event != null) {
             this.playerType = PlayerType.NONE
             this.emit(event)
         }
@@ -661,7 +776,8 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
 }
 ```
 
-Все, SDK готово, а это значит можем начинать использовать его на всех платформах в которые может компилироваться Kotlin, и начнем с JS.
+Все, SDK готово, а это значит можем начинать использовать его на всех платформах в которые может компилироваться Kotlin,
+и начнем с JS.
 
 ### Реализация использования SDK на платформах
 
@@ -675,9 +791,10 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
 
 После чего у вас должен появиться js файл с названием модуля **core.js**.
 
-![image-20220730210902218](images/core.js.png)
+![image-20220730210902218](images/core.js.jpg)
 
-Который будет содержать все написанные нами ранее классы только написанные уже на JS. И теперь чтобы игра окончательно заработала осталось только прикрутить представление. Обойдемся одним файлом в котором реализуем сразу 
+Который будет содержать все написанные нами ранее классы только написанные уже на JS. И теперь чтобы игра окончательно
+заработала нужно только прикрутить представление. Обойдемся одним файлом в котором реализуем сразу
 
 index.js
 
@@ -772,6 +889,7 @@ index.js
      * Обработчик события изменения состояния ячейки игрового поля
      * */
     const buttonMap = new Map()
+
     function updateView(event) {
         const {fieldCell} = event
         const cellHash = `${fieldCell.getY()}-${fieldCell.getX()}`
@@ -822,7 +940,8 @@ index.js
 
 #### Реализация на Swift
 
-Прежде чем создавать приложение нужно скомпилировать и собрать наш Kotlin код в Framework с которым будет дружить Xcode, давайте этим и займемся. 
+Прежде чем создавать приложение нужно скомпилировать и собрать наш Kotlin код в Framework с которым будет дружить Xcode,
+давайте этим и займемся.
 
 ```bash
 ./gradlew linkReleaseFrameworkIosArm64 linkReleaseFrameworkIosX64 &&
@@ -832,26 +951,30 @@ xcodebuild -create-xcframework \
     -output ./core/build/bin/core.xcframework
 ```
 
-Полученный в итоге сборки фреймворк нужно будет добавить в созданное ios приложение, чтобы получить возможность использовать классы написанные на kotlin в swift приложении.
+Полученный в итоге сборки фреймворк нужно будет добавить в созданное ios приложение, чтобы получить возможность
+использовать классы написанные на kotlin в swift приложении.
 
 Теперь можем перейти к реализации приложения на swift для этого создадим простое iOS приложение.
 
-![newiosapp.png](images/newiosapp.png)
+![newiosapp.jpg](images/newiosapp.jpg)
 
 Соответственно указываем название приложение и наименование организации и выбираем интерфейс **SwiftUI**
 
-![iosnexttab.png](images/iosnexttab.png)
+![iosnexttab.jpg](images/iosnexttab.jpg)
 
-Далее идем в настройки проекта, для того чтобы подключить созданный нами ранее framework. 
+Далее идем в настройки проекта, для того чтобы подключить созданный нами ранее framework.
 
 1) Первый шаг кликаем на название проекта, чтобы перейти к его настройкам
 2) Далее кликаем **+** в пункте **Frameworks, Libraries and Embedded content**.
-    В открывшемся окне нажимаем **Add other** и выбираем созданную ранее папку *./core/build/bin/core.xcframework*
+   В открывшемся окне нажимаем **Add other** и выбираем созданную ранее папку *./core/build/bin/core.xcframework*
 3) Если все сделано правильно наш framework должен появиться в таблице
 
-![add-framework.png](images/add-framework.png)
+![add-framework.jpg](images/add-framework.jpg)
 
-Теперь при написании кода у наз должен быть доступен для импорта фреймворк с названием соответствующий baseName который мы указали в *./core/build.gradle.kts*. Но давайте эе это проверим и напишем уже реализацию данной игры под ios. Для этого переходим в файл **ContentView** который автоматически создал Xcode при создании проекта. И напишем там вот такой вот код.
+Теперь при написании кода у нас должен быть доступен для импорта фреймворк с названием соответствующий baseName который
+мы указали в *./core/build.gradle.kts*. Но давайте это проверим и напишем уже реализацию данной игры под ios. Для этого
+переходим в файл **ContentView** который автоматически создал Xcode при создании проекта. И напишем там вот такой вот
+код.
 
 *ContentView.swift*
 
@@ -996,34 +1119,35 @@ struct ContentView_Previews: PreviewProvider {
 
 #### Реализация на Java
 
-Сейчас речь пойдет о мобильном приложении под Android, и по-хорошему нужно использовать Kotlin для разработки мобильных 
-приложений под Android как [объявил Google](https://developer.android.com/kotlin/first) в 2019 году, 
+Сейчас речь пойдет о мобильном приложении под Android, и по-хорошему нужно использовать Kotlin для разработки мобильных
+приложений под Android как [объявил Google](https://developer.android.com/kotlin/first) в 2019 году,
 но мы напишем на Java, чтобы продемонстрировать как наш SDK с ней дружит.
 
-Для JVM сборок нам нужен *.jar файл который мы могли бы подключить в проект, получить его можно выполнив команду 
+Для JVM сборок нам нужен *.jar файл который мы могли бы подключить в проект, получить его можно выполнив команду
+
 ```bash
 ./gradlew jvmJar
 ```
 
-В итоге в папке *core/libs* будет библиотека **core-jvm-1.0.0.jar** которую нужно будет в дальнейшем подключить в приложение.
+В итоге в папке *core/libs* будет библиотека **core-jvm-1.0.0.jar** которую нужно будет в дальнейшем подключить в
+приложение.
 
-![jar-result.png](images/jar-result.png)
-
+![jar-result.jpg](images/jar-result.jpg)
 
 Делать конечно же будем в Android Studio.
-Соответственно выбираем создать новый проект и выбираем создать **Empty Activity**  
+Соответственно выбираем создать новый проект и выбираем создать **Empty Activity**
 
+![empty-activity.jpg](images/empty-activity.jpg)
 
-![empty-activity.png](images/empty-activity.png)
+![android-start.jpg](images/android-start.jpg)
 
+А дальше как везде при работе с любой программой далее далее длаее ждем
 
-![android-start.png](images/android-start.png)
+Открываем *build.gradle* модуля (если переключиться в отображения проекта как проект будет в папке *app*) и добавляем
+зависимость.
 
-А дальше как везде при работе с любой программой далее далее длаее ждем 
-
-Открываем *build.gradle* модуля (если переключиться в отображения проекта как проект будет в папке *app*) и добавляем зависимость.
-
-by Project *app/build.gradle* или by Android *Gradle Scripts/build.gradle(Module: YourAppName.app)* где YourAppName это название вашего приложения
+by Project *app/build.gradle* или by Android *Gradle Scripts/build.gradle(Module: YourAppName.app)* где YourAppName это
+название вашего приложения
 
 ```groovy
 plugins {
@@ -1058,6 +1182,7 @@ android {
 dependencies {
     // Добавляем зависимость на наш SDK полученный ранее
     implementation files('../../../core/build/libs/core-jvm-1.0.0.jar')
+    // Добавляем зависимость для совместимости Kotlin лямбд
     implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.7.10'
 
     implementation 'androidx.appcompat:appcompat:1.3.0'
@@ -1082,9 +1207,12 @@ package com.example.tictactoe;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -1103,12 +1231,15 @@ import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
 public class MainActivity extends AppCompatActivity {
+    // Сразу создаем экземпляр игры при создании объекта
     final private Game game = new Game();
+    // Здесь сохраним кнопки чтобы было удобнее к ним обращаться и менять значение
     final private LinkedHashMap<String, Button> uiButtons = new LinkedHashMap<>();
 
-    Function1 onGameOver = o -> {
+    // Подписка на окончание игры
+    final Function1 onGameOver = o -> {
+        // Получаем информацию о победителе
         final GameOverEvent event = (GameOverEvent) o;
-        final TextView textView = findViewById(R.id.textWinner);
         String winnerMessage = "";
         switch (event.getWinner()) {
             case NONE:
@@ -1121,17 +1252,21 @@ public class MainActivity extends AppCompatActivity {
                 winnerMessage = "Выиграли X";
                 break;
         }
+        // Отображаем на экране
+        final TextView textView = findViewById(R.id.textWinner);
         textView.setText(winnerMessage);
         textView.setVisibility(View.VISIBLE);
         findViewById(R.id.buttonPlayAgain).setVisibility(View.VISIBLE);
         return Unit.INSTANCE;
     };
 
-    Function1 onGameCellChange = o -> {
+    // Подписка на изменение состояния ячейки игрового поля
+    final Function1 onGameCellChange = o -> {
+        // Получаем информацию о ячейке
         final GameCellEvent event = (GameCellEvent) o;
-        Log.d("GAME", event.getFieldCell().getX() + " " + event.getFieldCell().getY());
         final FieldCell fieldCell = event.getFieldCell();
         final String hash = makeHash(fieldCell.getX(), fieldCell.getY());
+        // Далее обновляем соответввующую кнопку
         final Button uiButton = this.uiButtons.get(hash);
         if (uiButton == null) {
             return Unit.INSTANCE;
@@ -1160,21 +1295,26 @@ public class MainActivity extends AppCompatActivity {
         return String.format("%s-%s", x, y);
     }
 
-    private void collectButtons() {
+    // Создаем игровое поле
+    private void createButtons() {
         final LinearLayout rowLayout = findViewById(R.id.fieldLinearLayout);
-        for (int y = 0; y < rowLayout.getChildCount(); y++) {
-            final View child = rowLayout.getChildAt(y);
-            final LinearLayout cellLayout = child instanceof LinearLayout ? (LinearLayout) child : null;
-            if (cellLayout == null) {
-                continue;
+        for (int y = 0; y < 3; y++) {
+            final LinearLayout row = new LinearLayout(this);
+            for (int x = 0; x < 3; x++) {
+                final Button button = new Button(this);
+                button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 64);
+                row.addView(button, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        1.0f
+                ));
+                // Сохраняем ссылку на кнопку для более простого поиска в дальнейшем
+                uiButtons.put(makeHash(x, y), button);
             }
-            for (int x = 0; x < cellLayout.getChildCount(); x++) {
-                final View subChild = cellLayout.getChildAt(x);
-                final Button button = subChild instanceof Button ? (Button) subChild : null;
-                if (button != null) {
-                    uiButtons.put(makeHash(x, y), button);
-                }
-            }
+            rowLayout.addView(row, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
         }
     }
 
@@ -1183,8 +1323,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        this.collectButtons();
+        // Создаем поле
+        this.createButtons();
 
+        // По клику запуска подписываеся на события игры и запускаем игру
         final Button buttonPlay = findViewById(R.id.buttonPlay);
         buttonPlay.setOnClickListener(v -> {
             game.on(GameEventType.GAME_OVER, onGameOver);
@@ -1194,6 +1336,7 @@ public class MainActivity extends AppCompatActivity {
             findViewById(R.id.fieldLinearLayout).setVisibility(View.VISIBLE);
         });
 
+        // По клику кнопки играть опять перезапускаем игру
         final Button buttonPlayAgain = findViewById(R.id.buttonPlayAgain);
         buttonPlayAgain.setOnClickListener(v -> {
             findViewById(R.id.textWinner).setVisibility(View.INVISIBLE);
@@ -1204,154 +1347,54 @@ public class MainActivity extends AppCompatActivity {
 }
 ```
 
-
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MainActivity">
+                                                   xmlns:app="http://schemas.android.com/apk/res-auto"
+                                                   xmlns:tools="http://schemas.android.com/tools"
+                                                   android:layout_width="match_parent"
+                                                   android:layout_height="match_parent"
+                                                   tools:context=".MainActivity">
 
     <LinearLayout
-        android:id="@+id/mainLinearLayout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <LinearLayout
-            android:id="@+id/fieldLinearLayout"
-            android:visibility="invisible"
+            android:id="@+id/mainLinearLayout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <LinearLayout
+        <LinearLayout
+                android:id="@+id/fieldLinearLayout"
+                android:visibility="invisible"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/button16"
-                    android:backgroundTint="@color/purple_200"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:layout_weight="1"
-                    android:textSize="64sp" />
-
-                <Button
-                    android:id="@+id/button17"
-                    android:backgroundTint="@color/purple_200"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:layout_weight="1"
-                    android:textSize="64sp" />
-
-                <Button
-                    android:id="@+id/button18"
-                    android:backgroundTint="@color/purple_200"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:layout_weight="1"
-                    android:textSize="64sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/button19"
-                    android:backgroundTint="@color/purple_200"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:layout_weight="1"
-                    android:textSize="64sp" />
-
-                <Button
-                    android:id="@+id/button20"
-                    android:backgroundTint="@color/purple_200"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:layout_weight="1"
-                    android:textSize="64sp" />
-
-                <Button
-                    android:id="@+id/button21"
-                    android:backgroundTint="@color/purple_200"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:layout_weight="1"
-                    android:textSize="64sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/button22"
-                    android:backgroundTint="@color/purple_200"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:layout_weight="1"
-                    android:textSize="64sp" />
-
-                <Button
-                    android:id="@+id/button23"
-                    android:backgroundTint="@color/purple_200"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:layout_weight="1"
-                    android:textSize="64sp" />
-
-                <Button
-                    android:id="@+id/button24"
-                    android:backgroundTint="@color/purple_200"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:layout_weight="1"
-                    android:textSize="64sp" />
-            </LinearLayout>
+                android:orientation="vertical">
+            <!-- Сюда будем динамически добавлять кнопки -->
         </LinearLayout>
 
 
         <Button
-            android:id="@+id/buttonPlay"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/play" />
+                android:id="@+id/buttonPlay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/play"/>
 
         <TextView
-            android:id="@+id/textWinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAlignment="center"
-            android:textSize="32sp"
-            android:visibility="invisible" />
+                android:id="@+id/textWinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:textSize="32sp"
+                android:visibility="invisible"/>
 
         <Button
-            android:id="@+id/buttonPlayAgain"
-            android:visibility="invisible"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/play_again" />
+                android:id="@+id/buttonPlayAgain"
+                android:visibility="invisible"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/play_again"/>
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
 ```
-
 
 ![android-result.gif](images/android-result.gif)
