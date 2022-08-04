@@ -14,7 +14,6 @@ kotlin {
     js(IR) {
         binaries.executable()
         browser()
-        nodejs()
     }
     /* iOS Target Configuration */
     iosX64 {
