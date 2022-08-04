@@ -274,7 +274,7 @@ class SayHello {
 5) Обновляет представление
 6) И начинается игра
 
-![relationships-logic](images\relationships-logic.jpg)
+![relationships-logic](images/relationships-logic.jpg)
 
 ### Код
 
