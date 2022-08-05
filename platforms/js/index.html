@@ -2,7 +2,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Tic Tac Toe</title>
+    <!--  Подключаем скомпилированный нами ранее SDK  -->
     <script src="../../core/build/distributions/core.js"></script>
+    <!--  Описываем стили поля и ячеек игрового поля  -->
     <style>
         .field {
             display: flex;
@@ -25,43 +27,60 @@
             border-radius: 10px;
             cursor: pointer;
         }
+
+        #crossIcon, #circleIcon {
+            display: none;
+        }
     </style>
 </head>
 <!-- Сюда будем выводить результат с кнопкой перезапуска -->
 <div id="result"></div>
 <!-- Главное поле сюда при рендере закинем ячейки поля -->
 <div class="field" id="field"></div>
+<!-- Сохраним иконки X и O в HTML представлении -->
+<div id="crossIcon">
+    <svg class="svg-icon"
+         style="width: 100%; height: auto;vertical-align: middle;fill: currentColor;overflow: hidden;"
+         viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+        <path d="M810.65984 170.65984q18.3296 0 30.49472 12.16512t12.16512 30.49472q0 18.00192-12.32896 30.33088l-268.67712 268.32896 268.67712 268.32896q12.32896 12.32896 12.32896 30.33088 0 18.3296-12.16512 30.49472t-30.49472 12.16512q-18.00192 0-30.33088-12.32896l-268.32896-268.67712-268.32896 268.67712q-12.32896 12.32896-30.33088 12.32896-18.3296 0-30.49472-12.16512t-12.16512-30.49472q0-18.00192 12.32896-30.33088l268.67712-268.32896-268.67712-268.32896q-12.32896-12.32896-12.32896-30.33088 0-18.3296 12.16512-30.49472t30.49472-12.16512q18.00192 0 30.33088 12.32896l268.32896 268.67712 268.32896-268.67712q12.32896-12.32896 30.33088-12.32896z"/>
+    </svg>
+</div>
+<div id="circleIcon">
+    <svg class="svg-icon"
+         style="width: 100%; height: auto;vertical-align: middle;fill: currentColor;overflow: hidden;"
+         viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+        <path d="M512 85.333333a426.666667 426.666667 0 1 0 426.666667 426.666667A426.666667 426.666667 0 0 0 512 85.333333z m0 768a341.333333 341.333333 0 1 1 341.333333-341.333333 341.333333 341.333333 0 0 1-341.333333 341.333333z"/>
+    </svg>
+</div>
+
 <body>
 <script>
-    // Иконки крестиков и ноликов которые будем выводить в ячейки
-    const crossSVG = `
-        <svg class="svg-icon"
-             style="width: 100%; height: auto;vertical-align: middle;fill: currentColor;overflow: hidden;"
-             viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-            <path d="M810.65984 170.65984q18.3296 0 30.49472 12.16512t12.16512 30.49472q0 18.00192-12.32896 30.33088l-268.67712 268.32896 268.67712 268.32896q12.32896 12.32896 12.32896 30.33088 0 18.3296-12.16512 30.49472t-30.49472 12.16512q-18.00192 0-30.33088-12.32896l-268.32896-268.67712-268.32896 268.67712q-12.32896 12.32896-30.33088 12.32896-18.3296 0-30.49472-12.16512t-12.16512-30.49472q0-18.00192 12.32896-30.33088l268.67712-268.32896-268.67712-268.32896q-12.32896-12.32896-12.32896-30.33088 0-18.3296 12.16512-30.49472t30.49472-12.16512q18.00192 0 30.33088 12.32896l268.32896 268.67712 268.32896-268.67712q12.32896-12.32896 30.33088-12.32896z"/>
-        </svg>
-    `;
-    const circleSymbol = `
-        <svg class="svg-icon"
-             style="width: 100%; height: auto;vertical-align: middle;fill: currentColor;overflow: hidden;"
-             viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-            <path d="M512 85.333333a426.666667 426.666667 0 1 0 426.666667 426.666667A426.666667 426.666667 0 0 0 512 85.333333z m0 768a341.333333 341.333333 0 1 1 341.333333-341.333333 341.333333 341.333333 0 0 1-341.333333 341.333333z"/>
-        </svg>
-    `;
-
     /**
-     * Обращаемся к SDK импортируем то что будем использовать для создания игры
+     * Обращаемся к SDK и импортируем то что будем использовать для создания игры
      * */
     const sdk = window.core.org.rubicon.game.impl
     const {Game, PlayerType} = sdk
     const {GameEventType} = sdk.events
 
+    // Иконки крестиков и ноликов которые будем выводить в ячейки
+    const crossSVG = document.getElementById("crossIcon").innerHTML;
+    const circleSymbol = document.getElementById("circleIcon").innerHTML;
+
+    // Сюда будем сохранять HTML кнопки
+    // чтобы при событии изменения состояния мы быстро нашли нашу кнопку
+    // и обновили представление
+    const buttonMap = new Map()
+
     /**
      * Обработчик события окончания игры
+     *
+     * Выводит результат на игры на страницу
      * */
     function gameOver(event) {
+        // Достаем данные из события
         const {winner, source} = event
         const winnerText = document.createElement("H3")
+        // На основании типа игрока делаем сообщение о том кто выиграл
         switch (winner) {
             case PlayerType.NONE:
                 winnerText.innerText = "Ничья"
@@ -73,6 +92,7 @@
                 winnerText.innerText = "Выиграли нолики"
                 break
         }
+        // Создаем кнопку для запуска игры сначала
         const resultElement = document.getElementById("result")
         const repeatButton = document.createElement("button")
         repeatButton.innerText = "Играть еще раз"
@@ -80,24 +100,34 @@
             source.reset()
             resultElement.innerHTML = ""
         })
+        // Выводи результат и кнопку
         resultElement.appendChild(winnerText)
         resultElement.appendChild(repeatButton)
     }
 
     /**
-     * Обработчик события изменения состояния ячейки игрового поля
+     * Создает ячейку игрового поля создает подписку чтобы при клике по ui кнопке вызывался клик ячейки из SDK
      * */
-    const buttonMap = new Map()
+    function createUICell(hash, fieldCell) {
+        const htmlCell = document.createElement("div")
+        htmlCell.classList.add("field-cell")
+        htmlCell.addEventListener("mousedown", () => fieldCell.click())
+        document.getElementById("field").appendChild(htmlCell)
+        buttonMap.set(hash, htmlCell)
+    }
+
+    /**
+     *  Обновляет состояние представления путем обработки изменения состояний ячеек
+     * */
     function updateView(event) {
+        // Получаем ячейку
         const {fieldCell} = event
         const cellHash = `${fieldCell.getY()}-${fieldCell.getX()}`
         if (!buttonMap.has(cellHash)) {
-            const htmlCell = document.createElement("div")
-            htmlCell.classList.add("field-cell")
-            htmlCell.addEventListener("mousedown", () => fieldCell.click())
-            document.getElementById("field").appendChild(htmlCell)
-            buttonMap.set(cellHash, htmlCell)
+            // если ранее не обрабатывали данную ячейку создаем html кнопку для этой ячейки
+            createUICell(cellHash, fieldCell)
         }
+        // Обновляем состояние html кнопки
         const uiElement = buttonMap.get(cellHash)
         switch (fieldCell.getState()) {
             case PlayerType.NONE:

@@ -19,34 +19,51 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
         }
     }
 
-    // Первым ходят крестики
-    private var playerType: PlayerType = PlayerType.CROSS
+    // Содержит информацию о том кто в данный момент времени ходит
+    private var currentPlayer: PlayerType = PlayerType.CROSS
+
+    // Все возможные выигрышные позиции
     private val winConditions: List<List<FieldCell>> by lazy {
         this.getAllWinConditions()
     }
 
+    /**
+     * Обработчик события клика по ICell
+     *
+     * Проставляет ячейки кликнувшего игрока, переключает ход игрока и проверяет завершенность игры
+     *
+     * */
     private fun onClickFieldCell(event: IEvent<FieldCellEvents, FieldCell>) {
-        if (this.playerType != PlayerType.NONE) {
+        if (this.currentPlayer != PlayerType.NONE) {
             val fieldCell: FieldCell = event.source
-            this.changeFiledCellState(fieldCell, playerType)
+            this.changeFiledCellState(fieldCell, currentPlayer)
             this.turnMove()
             this.checkGameOver()
         }
     }
 
+    /**
+     * Меняет состояние ячейки и сообщает об этом событием
+     * */
     private fun changeFiledCellState(fieldCell: FieldCell, state: PlayerType) {
         fieldCell.changeState(state)
         this.emit(GameCellEvent(this, fieldCell))
     }
 
+    /**
+     * Переключает текущего игрока на его противника или на сторону по умолчанию
+     * */
     private fun turnMove() {
-        this.playerType = when (playerType) {
+        this.currentPlayer = when (currentPlayer) {
             PlayerType.CROSS -> PlayerType.ZERO
             PlayerType.ZERO,
             PlayerType.NONE -> PlayerType.CROSS
         }
     }
 
+    /**
+     * Проверяет статус окончания игры
+     * */
     private fun checkGameOver() {
         val winLine = this.winConditions.find { this.isMatchLine(it) }
         val event = when {
@@ -54,18 +71,24 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
             !hasFreeCells() -> GameOverEvent(this)
             else -> null
         }
-        if(event != null) {
-            this.playerType = PlayerType.NONE
+        if (event != null) {
+            this.currentPlayer = PlayerType.NONE
             this.emit(event)
         }
     }
 
+    /**
+     * Проверяет наличие ячеек на которые еще не кликали
+     * */
     private fun hasFreeCells(): Boolean {
         return this.field.any { row ->
             row.any { it.getState() == PlayerType.NONE }
         }
     }
 
+    /**
+     * Проверяет что переданная комбинация ячеек выбрана одним игроком
+     * */
     private fun isMatchLine(row: List<FieldCell>): Boolean {
         if (row.isEmpty()) return false
         val firstState = row.first().getState()
@@ -73,6 +96,9 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
         return row.all { it.getState() == firstState }
     }
 
+    /**
+     * Возвращает все возможные выигрышные комбинации
+     * */
     private fun getAllWinConditions(): List<List<FieldCell>> {
         val result: ArrayList<List<FieldCell>> = arrayListOf()
         val diagonal: ArrayList<FieldCell> = arrayListOf()
@@ -102,14 +128,20 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
         return result
     }
 
+    /**
+     * Сбрасывает игру чтобы представление получило обновление состояний и отрисовало поле
+     * */
     override fun play() {
         // Суть метода заключается в том чтобы отрисовать ячейки игрового поля
         // Поэтому reset сюда подходит
         this.reset()
     }
 
+    /**
+     * Сбрасывает состояние ячеек на состояние ни кем не выбрано
+     * */
     override fun reset() {
-        this.playerType = PlayerType.CROSS
+        this.currentPlayer = PlayerType.CROSS
         for (y in 0 until this.field.size) {
             for (x in 0 until this.field[y].size) {
                 this.changeFiledCellState(this.field[y][x], PlayerType.NONE)

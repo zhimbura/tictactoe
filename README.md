@@ -282,11 +282,15 @@ class SayHello {
 
 После того как готово готово к написанию кода можно приступать. В основном код будет писаться в **commonMain** и там будут располагаться классы которые потом будут использоваться уже на платформах где будет запускаться наша игра.
 
+Дальше будет много кода, я не хотел весь его дублировать в статью и думал сделать проект чтобы было еще меньше кода, но проект с условным hello world не показал бы кейса реального использования. Поэтому кто не хочет листать портянку лучше проследуйте на github проект [tictactoe](https://github.com/Tihon-Ustinov/tictactoe).
+
 По задуманной логике обновление представление должно происходить по событию, а это значит нужно создать класс который будет уметь принимать слушателей и уметь кидать события, назовем такой класс **EventEmitter** а его интерфейс **IEventEmitter**.
 
 Но события в нашей модели должны нести некоторую информацию, например если view подпишется на изменение
 состояния поля, при срабатывании подписки одно должно знать где именно был поставлен крестик или нолик. Поэтому сначала
 объявим **IEvent** и реализуем его имплементацию **Event**.
+
+
 
 interface *core/src/commonMain/kotlin/org/rubicon/game/IEvent.kt*
 
@@ -316,6 +320,8 @@ interface IEvent<T : Enum<T>, S> {
     operator fun component2(): S = this.source
 }
 ```
+
+В данном листинге кода мы можем наблюдать аннотацию **@JsExport**, она необходима чтобы сущность для которой указывается эта аннотация была доступна на JS и чтобы названия методов сохранились. Так же наиболее часто можно встретить аннотацию **@JsName**, которая необходима для указания наименования в случаях когда это не может сделаться автоматически, например в JS нету перегрузки поэтому для перегружаемых методов нужно давать разные названия. Так же не редко можно заметить аннотацию **@JvmOverloads** которая позволяет реализовать аргументы по умолчанию посредством перегрузки в Java. Ну и так же в приведенных ниже листингах кода можно встретить аннотацию **@Throws** добавляет в целевую сборку о том что метод может быть завершен с ошибкой и стоит обработать исключение. 
 
 class *core/src/commonMain/kotlin/org/rubicon/game/impl/events/Event.kt*
 
@@ -424,14 +430,13 @@ abstract class EventEmitter<T : Enum<T>, S> : IEventEmitter<T, S> {
 }
 ```
 
-Теперь простым наследованием мы можем научить любой класс кидать события и можем перейти к созданию главного класса
-игры **Game**. Так как наш класс должен быть наследником **EventEmitter** а он требует указания перечисления событий то
-сделаем это, создадим перечисление событий игры.
+Теперь простым наследованием мы можем научить любой класс кидать события что позволяет нам перейти к созданию главного класса
+игры **Game**. Но для этого так же нужно объявить типы каких событий наш класс **Game** будет кидать.
 
 Соответственно события которые могут возникнуть во время игры
 
-- окончание игры когда какая-то сторона выиграла или не осталось ходов
-- событие изменения ячейки игрового поля, когда там будут ставить крестики или нолики
+- GAME_OVER - окончание игры, будет кидаться когда какая-то сторона выиграла или все доступные  ходы закончились.
+- CHANGE_CELL - событие изменения состояния ячейки игрового поля (того кубика где рисуется крестик или нолик), соответственно будет кидаться когда в ячейку проставится крестик, нолик или сбросится состояние.
 
 enum *core/src/commonMain/kotlin/org/rubicon/game/impl/events/GameEventType.kt*
 
@@ -457,8 +462,7 @@ enum class GameEventType {
 }
 ```
 
-Теперь у нас есть все, чтобы объявить интерфейс **IGame** и указать методы которые можно будет вызывать на стороне
-представления.
+Теперь у нас достаточный набор классов и интерфейсов чтобы, чтобы объявить интерфейс **IGame** и указать методы которые можно будет вызывать на стороне представления.
 
 interface *core/src/commonMain/kotlin/org/rubicon/game/IGame.kt*
 
@@ -488,12 +492,9 @@ interface IGame : IEventEmitter<GameEventType, IGame> {
 }
 ```
 
-Но для непосредственной реализации нам не хватает еще четырех сущностей
+Но для непосредственной реализации самой имплементации **IGame** нам не хватает еще четырех сущностей:
 
-- **PlayerType** перечисляемый класс обозначающий игрока, крестик, нолик или его отсутствие
-- **IFieldCell** элемент, который будет отвечать за квадратик с крестиком или ноликом на игровом поле
-- **GameCellEvent** событие изменения состояния ячейки игрового поля с указанием этой самой ячейки
-- **GameOverEvent** событие окончания с указанием победителя
+Сущность первая. **PlayerType** перечисляемый класс обозначающий игрока, крестик, нолик или его отсутствие.
 
 enum *core/src/commonMain/kotlin/org/rubicon/game/impl/PlayerType.kt*
 
@@ -523,6 +524,8 @@ enum class PlayerType {
     ZERO
 }
 ```
+
+Сущность вторая. **IFieldCell** ячейка игрового поля, которая будет отвечать за квадратик с крестиком или ноликом на игровом поле. Экземпляр реализации этого класса будет отдаваться представлению для отрисовки его состояния и для принятия клика.
 
 interface *core/src/commonMain/kotlin/org/rubicon/game/IFieldCell.kt*
 
@@ -559,7 +562,7 @@ interface IFieldCell {
 }
 ```
 
-И сразу же реализуем эту игровую ячейку **FieldCell**.
+И конечно же реализуем имплементацию **FieldCell**.
 
 class *core/src/commonMain/kotlin/org/rubicon/game/impl/FieldCell.kt*
 
@@ -604,6 +607,8 @@ class FieldCell(
 }
 ```
 
+Сущность третья. **GameCellEvent** событие обозначающее изменения состояния ячейки игрового поля с указанием этой самой ячейки.
+
 class *core/src/commonMain/kotlin/org/rubicon/game/impl/events/GameCellEvent.kt*
 
 ```kotlin
@@ -616,9 +621,12 @@ import kotlin.js.JsExport
 @JsExport
 class GameCellEvent(
     source: IGame,
+    // Ячейка игрового поля
     val fieldCell: FieldCell
 ) : Event<GameEventType, IGame>(GameEventType.CHANGE_CELL, source)
 ```
+
+Сущность четвертая. **GameOverEvent** событие обозначающее окончание игры с содержанием информации о победителе и выигрышной комбинации игровых ячеек.
 
 class *core/src/commonMain/kotlin/org/rubicon/game/impl/events/GameOverEvent.kt*
 
@@ -635,13 +643,20 @@ class GameOverEvent(
     game: IGame,
     winLine: List<FieldCell>? = null
 ) : Event<GameEventType, IGame>(GameEventType.GAME_OVER, game) {
+    // Приводим к Array для того чтобы в JS этот метод вернул нативный массив
     val winLine = winLine?.toTypedArray()
+    // Так как выигрышная конфигурация может быть только одной стороны мы можем получить победителя оттуда
     val winner: PlayerType = winLine?.first()?.getState() ?: PlayerType.NONE
 }
 ```
 
-И теперь можем перейти к последнему классу в SDK **Game** и реализовать его. В этом классе будет основная логика игры
-такая как проверка победы, изменение состояний **FieldCell** и создание событий об изменении этих состояний.
+И последний самый интересный класс в нашем SDK, но не последний в этой статье, класс **Game**.  Этот класс реализует основную логику игры. Суть логики должна быть всем понятна кто играл в крестики-нолики. Изначально у нас есть поле 3 x 3,  и выигрывает сторона которая поставит свой знак в 3-х клетках подряд. Логика работы такая что мы 
+
+- создаем поле из ячеек 
+- подписываемся на событие клика этих ячеек
+- при событии клика ставим им значение кто кликнул с попутным уведомлением об этом
+- проверяем законченность игры
+- кидаем событие об окончании игры 
 
 class *core/src/commonMain/kotlin/org/rubicon/game/impl/Game.kt*
 
@@ -667,34 +682,51 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
         }
     }
 
-    // Первым ходят крестики
-    private var playerType: PlayerType = PlayerType.CROSS
+    // Содержит информацию о том кто в данный момент времени ходит
+    private var currentPlayer: PlayerType = PlayerType.CROSS
+
+    // Все возможные выигрышные позиции
     private val winConditions: List<List<FieldCell>> by lazy {
         this.getAllWinConditions()
     }
 
+    /**
+     * Обработчик события клика по ICell
+     *
+     * Проставляет ячейки кликнувшего игрока, переключает ход игрока и проверяет завершенность игры
+     *
+     * */
     private fun onClickFieldCell(event: IEvent<FieldCellEvents, FieldCell>) {
-        if (this.playerType != PlayerType.NONE) {
+        if (this.currentPlayer != PlayerType.NONE) {
             val fieldCell: FieldCell = event.source
-            this.changeFiledCellState(fieldCell, playerType)
+            this.changeFiledCellState(fieldCell, currentPlayer)
             this.turnMove()
             this.checkGameOver()
         }
     }
 
+    /**
+     * Меняет состояние ячейки и сообщает об этом событием
+     * */
     private fun changeFiledCellState(fieldCell: FieldCell, state: PlayerType) {
         fieldCell.changeState(state)
         this.emit(GameCellEvent(this, fieldCell))
     }
 
+    /**
+     * Переключает текущего игрока на его противника или на сторону по умолчанию
+     * */
     private fun turnMove() {
-        this.playerType = when (playerType) {
+        this.currentPlayer = when (currentPlayer) {
             PlayerType.CROSS -> PlayerType.ZERO
             PlayerType.ZERO,
             PlayerType.NONE -> PlayerType.CROSS
         }
     }
 
+    /**
+     * Проверяет статус окончания игры
+     * */
     private fun checkGameOver() {
         val winLine = this.winConditions.find { this.isMatchLine(it) }
         val event = when {
@@ -703,17 +735,23 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
             else -> null
         }
         if (event != null) {
-            this.playerType = PlayerType.NONE
+            this.currentPlayer = PlayerType.NONE
             this.emit(event)
         }
     }
 
+    /**
+     * Проверяет наличие ячеек на которые еще не кликали
+     * */
     private fun hasFreeCells(): Boolean {
         return this.field.any { row ->
             row.any { it.getState() == PlayerType.NONE }
         }
     }
 
+    /**
+     * Проверяет что переданная комбинация ячеек выбрана одним игроком
+     * */
     private fun isMatchLine(row: List<FieldCell>): Boolean {
         if (row.isEmpty()) return false
         val firstState = row.first().getState()
@@ -721,6 +759,9 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
         return row.all { it.getState() == firstState }
     }
 
+    /**
+     * Возвращает все возможные выигрышные комбинации
+     * */
     private fun getAllWinConditions(): List<List<FieldCell>> {
         val result: ArrayList<List<FieldCell>> = arrayListOf()
         val diagonal: ArrayList<FieldCell> = arrayListOf()
@@ -742,6 +783,7 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
                     this.field[2][i],
                 )
             )
+            // Добавляем варианты по диагоняли
             diagonal.add(this.field[i][i])
             diagonalOpposite.add(this.field[2 - i][i])
         }
@@ -750,14 +792,20 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
         return result
     }
 
+    /**
+     * Сбрасывает игру чтобы представление получило обновление состояний и отрисовало поле
+     * */
     override fun play() {
         // Суть метода заключается в том чтобы отрисовать ячейки игрового поля
         // Поэтому reset сюда подходит
         this.reset()
     }
 
+    /**
+     * Сбрасывает состояние ячеек на состояние ни кем не выбрано
+     * */
     override fun reset() {
-        this.playerType = PlayerType.CROSS
+        this.currentPlayer = PlayerType.CROSS
         for (y in 0 until this.field.size) {
             for (x in 0 until this.field[y].size) {
                 this.changeFiledCellState(this.field[y][x], PlayerType.NONE)
@@ -768,8 +816,7 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
 }
 ```
 
-Все, SDK готово, а это значит можем начинать использовать его на всех платформах в которые может компилироваться Kotlin,
-и начнем с JS.
+Все, SDK готово, а это значит можем начинать использовать его на всех платформах в которые может компилироваться Kotlin, и начнем с JS.
 
 ### Реализация использования SDK на платформах
 
@@ -781,21 +828,26 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
 ./gradlew jsBrowserProductionWebpack
 ```
 
-После чего у вас должен появиться js файл с названием модуля **core.js**.
+После чего у вас должен появиться js файл с названием модуля *core/build/distributions/core.js*.
 
 ![image-20220730210902218](images/core.js.jpg)
 
-Который будет содержать все написанные нами ранее классы только написанные уже на JS. И теперь чтобы игра окончательно
-заработала нужно только прикрутить представление. Обойдемся одним файлом в котором реализуем сразу
+Или если вы хотите получить профит от типизации то тогда нужно брать директорию по пути *build/js/packages/tictactoe-core* которая по своей структуре является обычным npm пакетом с файлом *package.json* и *.d.ts файлом внутри.  
 
-index.js
+Обе сборки будут содержать все написанные нами ранее классы только на js. И соответственно мы можем добавить один из этих артефактов в любой js  проект. Что мы сейчас и сделаем. 
+
+Проект на js будет максимально простой, одна единственная **index.html** страница, к которой подключается собранный ранее SDK посредством добавления html тега *script*. В этот же файле реализованы не сложные стили игрового поля, и процесс взаимодействия с SDK. Уверен что можно было бы реализовать это красивее и чище, но это лишь демонстрация возможности работы с SDK а на паттерн проектирования.
+
+*index.js*
 
 ```html
 <!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <title>Tic Tac Toe</title>
+    <!--  Подключаем скомпилированный нами ранее SDK  -->
     <script src="../../core/build/distributions/core.js"></script>
+    <!--  Описываем стили поля и ячеек игрового поля  -->
     <style>
         .field {
             display: flex;
@@ -818,43 +870,60 @@ index.js
             border-radius: 10px;
             cursor: pointer;
         }
+
+        #crossIcon, #circleIcon {
+            display: none;
+        }
     </style>
 </head>
 <!-- Сюда будем выводить результат с кнопкой перезапуска -->
 <div id="result"></div>
 <!-- Главное поле сюда при рендере закинем ячейки поля -->
 <div class="field" id="field"></div>
+<!-- Сохраним иконки X и O в HTML представлении -->
+<div id="crossIcon">
+    <svg class="svg-icon"
+         style="width: 100%; height: auto;vertical-align: middle;fill: currentColor;overflow: hidden;"
+         viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+        <path d="M810.65984 170.65984q18.3296 0 30.49472 12.16512t12.16512 30.49472q0 18.00192-12.32896 30.33088l-268.67712 268.32896 268.67712 268.32896q12.32896 12.32896 12.32896 30.33088 0 18.3296-12.16512 30.49472t-30.49472 12.16512q-18.00192 0-30.33088-12.32896l-268.32896-268.67712-268.32896 268.67712q-12.32896 12.32896-30.33088 12.32896-18.3296 0-30.49472-12.16512t-12.16512-30.49472q0-18.00192 12.32896-30.33088l268.67712-268.32896-268.67712-268.32896q-12.32896-12.32896-12.32896-30.33088 0-18.3296 12.16512-30.49472t30.49472-12.16512q18.00192 0 30.33088 12.32896l268.32896 268.67712 268.32896-268.67712q12.32896-12.32896 30.33088-12.32896z"/>
+    </svg>
+</div>
+<div id="circleIcon">
+    <svg class="svg-icon"
+         style="width: 100%; height: auto;vertical-align: middle;fill: currentColor;overflow: hidden;"
+         viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+        <path d="M512 85.333333a426.666667 426.666667 0 1 0 426.666667 426.666667A426.666667 426.666667 0 0 0 512 85.333333z m0 768a341.333333 341.333333 0 1 1 341.333333-341.333333 341.333333 341.333333 0 0 1-341.333333 341.333333z"/>
+    </svg>
+</div>
+
 <body>
 <script>
-    // Иконки крестиков и ноликов которые будем выводить в ячейки
-    const crossSVG = `
-        <svg class="svg-icon"
-             style="width: 100%; height: auto;vertical-align: middle;fill: currentColor;overflow: hidden;"
-             viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-            <path d="M810.65984 170.65984q18.3296 0 30.49472 12.16512t12.16512 30.49472q0 18.00192-12.32896 30.33088l-268.67712 268.32896 268.67712 268.32896q12.32896 12.32896 12.32896 30.33088 0 18.3296-12.16512 30.49472t-30.49472 12.16512q-18.00192 0-30.33088-12.32896l-268.32896-268.67712-268.32896 268.67712q-12.32896 12.32896-30.33088 12.32896-18.3296 0-30.49472-12.16512t-12.16512-30.49472q0-18.00192 12.32896-30.33088l268.67712-268.32896-268.67712-268.32896q-12.32896-12.32896-12.32896-30.33088 0-18.3296 12.16512-30.49472t30.49472-12.16512q18.00192 0 30.33088 12.32896l268.32896 268.67712 268.32896-268.67712q12.32896-12.32896 30.33088-12.32896z"/>
-        </svg>
-    `;
-    const circleSymbol = `
-        <svg class="svg-icon"
-             style="width: 100%; height: auto;vertical-align: middle;fill: currentColor;overflow: hidden;"
-             viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-            <path d="M512 85.333333a426.666667 426.666667 0 1 0 426.666667 426.666667A426.666667 426.666667 0 0 0 512 85.333333z m0 768a341.333333 341.333333 0 1 1 341.333333-341.333333 341.333333 341.333333 0 0 1-341.333333 341.333333z"/>
-        </svg>
-    `;
-
     /**
-     * Обращаемся к SDK импортируем то что будем использовать для создания игры
+     * Обращаемся к SDK и импортируем то что будем использовать для создания игры
      * */
     const sdk = window.core.org.rubicon.game.impl
     const {Game, PlayerType} = sdk
     const {GameEventType} = sdk.events
 
+    // Иконки крестиков и ноликов которые будем выводить в ячейки
+    const crossSVG = document.getElementById("crossIcon").innerHTML;
+    const circleSymbol = document.getElementById("circleIcon").innerHTML;
+
+    // Сюда будем сохранять HTML кнопки
+    // чтобы при событии изменения состояния мы быстро нашли нашу кнопку
+    // и обновили представление
+    const buttonMap = new Map()
+
     /**
      * Обработчик события окончания игры
+     *
+     * Выводит результат на игры на страницу
      * */
     function gameOver(event) {
+        // Достаем данные из события
         const {winner, source} = event
         const winnerText = document.createElement("H3")
+        // На основании типа игрока делаем сообщение о том кто выиграл
         switch (winner) {
             case PlayerType.NONE:
                 winnerText.innerText = "Ничья"
@@ -866,6 +935,7 @@ index.js
                 winnerText.innerText = "Выиграли нолики"
                 break
         }
+        // Создаем кнопку для запуска игры сначала
         const resultElement = document.getElementById("result")
         const repeatButton = document.createElement("button")
         repeatButton.innerText = "Играть еще раз"
@@ -873,25 +943,34 @@ index.js
             source.reset()
             resultElement.innerHTML = ""
         })
+        // Выводи результат и кнопку
         resultElement.appendChild(winnerText)
         resultElement.appendChild(repeatButton)
     }
 
     /**
-     * Обработчик события изменения состояния ячейки игрового поля
+     * Создает ячейку игрового поля создает подписку чтобы при клике по ui кнопке вызывался клик ячейки из SDK
      * */
-    const buttonMap = new Map()
+    function createUICell(hash, fieldCell) {
+        const htmlCell = document.createElement("div")
+        htmlCell.classList.add("field-cell")
+        htmlCell.addEventListener("mousedown", () => fieldCell.click())
+        document.getElementById("field").appendChild(htmlCell)
+        buttonMap.set(hash, htmlCell)
+    }
 
+    /**
+     *  Обновляет состояние представления путем обработки изменения состояний ячеек
+     * */
     function updateView(event) {
+        // Получаем ячейку
         const {fieldCell} = event
         const cellHash = `${fieldCell.getY()}-${fieldCell.getX()}`
         if (!buttonMap.has(cellHash)) {
-            const htmlCell = document.createElement("div")
-            htmlCell.classList.add("field-cell")
-            htmlCell.addEventListener("mousedown", () => fieldCell.click())
-            document.getElementById("field").appendChild(htmlCell)
-            buttonMap.set(cellHash, htmlCell)
+            // если ранее не обрабатывали данную ячейку создаем html кнопку для этой ячейки
+            createUICell(cellHash, fieldCell)
         }
+        // Обновляем состояние html кнопки
         const uiElement = buttonMap.get(cellHash)
         switch (fieldCell.getState()) {
             case PlayerType.NONE:
@@ -924,7 +1003,7 @@ index.js
 </html>
 ```
 
-И вот так просто мы интегрировали написанный на Kotlin код в JS пример и получили вот такой замечательный результат.
+И вот так просто с точки зрения потребителя SDK мы интегрировали написанный на Kotlin код в JS пример и получили вот такой работающий результат.
 
 ![examplejs2](images/examplejs.gif)
 
@@ -932,8 +1011,7 @@ index.js
 
 #### Реализация на Swift
 
-Прежде чем создавать приложение нужно скомпилировать и собрать наш Kotlin код в Framework с которым будет дружить Xcode,
-давайте этим и займемся.
+Прежде чем создавать приложение нужно скомпилировать и собрать наш Kotlin код в Framework с которым будет дружить Xcode, для этого нужно выполнить вот такие команды. Где первая команда компиляция кода под разные архитектуры а вторая это склейка полученных от  первой команды  *.framework в один *.xcframework который необходим нам для подключения его к проекту, чтобы получить возможность использовать классы написанные на kotlin в swift приложении..
 
 ```bash
 ./gradlew linkReleaseFrameworkIosArm64 linkReleaseFrameworkIosX64 &&
@@ -943,10 +1021,7 @@ xcodebuild -create-xcframework \
     -output ./core/build/bin/core.xcframework
 ```
 
-Полученный в итоге сборки фреймворк нужно будет добавить в созданное ios приложение, чтобы получить возможность
-использовать классы написанные на kotlin в swift приложении.
-
-Теперь можем перейти к реализации приложения на swift для этого создадим простое iOS приложение.
+После того как получили *.xcframework можем перейти к реализации приложения на swift. Для этого создадим простое iOS приложение в Xcode.
 
 ![newiosapp.jpg](images/newiosapp.jpg)
 
@@ -964,9 +1039,9 @@ xcodebuild -create-xcframework \
 ![add-framework.jpg](images/add-framework.jpg)
 
 Теперь при написании кода у нас должен быть доступен для импорта фреймворк с названием соответствующий baseName который
-мы указали в *./core/build.gradle.kts*. Но давайте это проверим и напишем уже реализацию данной игры под ios. Для этого
+мы указали в *./core/build.gradle.kts*. Но давайте это проверим и напишем реализацию нашей игры под iOS. Для этого
 переходим в файл **ContentView** который автоматически создал Xcode при создании проекта. И напишем там вот такой вот
-код.
+код. 
 
 *ContentView.swift*
 
