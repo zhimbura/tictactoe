@@ -3,9 +3,7 @@ package com.example.tictactoe;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.res.ColorStateList;
 import android.os.Bundle;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,8 +18,6 @@ import org.rubicon.game.impl.events.GameEventType;
 import org.rubicon.game.impl.events.GameOverEvent;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
@@ -32,8 +28,36 @@ public class MainActivity extends AppCompatActivity {
     // Здесь сохраним кнопки чтобы было удобнее к ним обращаться и менять значение
     final private LinkedHashMap<String, Button> uiButtons = new LinkedHashMap<>();
 
+    // Точка взхода в View
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Создаем поле
+        this.createButtons();
+
+        // По клику запуска подписываеся на события игры и запускаем игру
+        final Button buttonPlay = findViewById(R.id.buttonPlay);
+        buttonPlay.setOnClickListener(v -> {
+            game.on(GameEventType.GAME_OVER, onGameOver);
+            game.on(GameEventType.CHANGE_CELL, onGameCellChange);
+            game.play();
+            buttonPlay.setVisibility(View.INVISIBLE);
+            findViewById(R.id.fieldLinearLayout).setVisibility(View.VISIBLE);
+        });
+
+        // По клику кнопки играть опять перезапускаем игру
+        final Button buttonPlayAgain = findViewById(R.id.buttonPlayAgain);
+        buttonPlayAgain.setOnClickListener(v -> {
+            findViewById(R.id.textWinner).setVisibility(View.INVISIBLE);
+            game.reset();
+            buttonPlayAgain.setVisibility(View.INVISIBLE);
+        });
+    }
+
     // Подписка на окончание игры
-    final Function1 onGameOver = o -> {
+    private final Function1 onGameOver = o -> {
         // Получаем информацию о победителе
         final GameOverEvent event = (GameOverEvent) o;
         String winnerMessage = "";
@@ -57,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
     };
 
     // Подписка на изменение состояния ячейки игрового поля
-    final Function1 onGameCellChange = o -> {
+    private final Function1 onGameCellChange = o -> {
         // Получаем информацию о ячейке
         final GameCellEvent event = (GameCellEvent) o;
         final FieldCell fieldCell = event.getFieldCell();
@@ -112,32 +136,5 @@ public class MainActivity extends AppCompatActivity {
                     ViewGroup.LayoutParams.WRAP_CONTENT
             ));
         }
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        // Создаем поле
-        this.createButtons();
-
-        // По клику запуска подписываеся на события игры и запускаем игру
-        final Button buttonPlay = findViewById(R.id.buttonPlay);
-        buttonPlay.setOnClickListener(v -> {
-            game.on(GameEventType.GAME_OVER, onGameOver);
-            game.on(GameEventType.CHANGE_CELL, onGameCellChange);
-            game.play();
-            buttonPlay.setVisibility(View.INVISIBLE);
-            findViewById(R.id.fieldLinearLayout).setVisibility(View.VISIBLE);
-        });
-
-        // По клику кнопки играть опять перезапускаем игру
-        final Button buttonPlayAgain = findViewById(R.id.buttonPlayAgain);
-        buttonPlayAgain.setOnClickListener(v -> {
-            findViewById(R.id.textWinner).setVisibility(View.INVISIBLE);
-            game.reset();
-            buttonPlayAgain.setVisibility(View.INVISIBLE);
-        });
     }
 }
