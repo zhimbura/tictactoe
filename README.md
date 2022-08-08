@@ -180,7 +180,7 @@ PlatformTest. Нам они не понадобятся поэтому эти ф
 
 
 <details>
-  <summary>Код *./settings.gradle.kts*</summary>
+  <summary>Код ./settings.gradle.kts</summary>
 
 ```kotlin
 pluginManagement {
@@ -205,7 +205,8 @@ include(":core")
 Во втором укажем версию и группу, для того чтобы при после компиляции у нас были нормальные названия и версии
 соответственно.
 
-*./gradle.properties*
+<details>
+  <summary>Код ./gradle.properties</summary>
 
 ```properties
 # Добавляем группу и версию остальное оставляем без изменений
@@ -220,6 +221,11 @@ kotlin.code.style=official
 kotlin.mpp.enableCInteropCommonization=true
 ```
 
+</details>
+
+
+
+
 B в третьем файле *./core/build.gradle.kts* настроим параметры сборки под для конкретных платформ.
 
 Где для jvm указываем версию java с которой должна быть совместим полученный на выходе *.jar файл. Можно поставить и
@@ -233,7 +239,8 @@ B в третьем файле *./core/build.gradle.kts* настроим пар
 
 Остальное оставляем без изменений.
 
-*./core/build.gradle.kts*
+<details>
+  <summary>Код ./core/build.gradle.kts</summary>
 
 ```kotlin
 plugins {
@@ -318,6 +325,8 @@ kotlin {
 }
 ```
 
+</details>
+
 ### Написание кода
 
 Далее если вас не интересует разработка ядра игры, то вы можете написать простой класс с выводом сообщения по пути *
@@ -379,7 +388,8 @@ IEventEmitter**.
 состояния поля, при срабатывании подписки одно должно знать где именно был поставлен крестик или нолик. Поэтому сначала
 объявим **IEvent** и реализуем его имплементацию **Event**.
 
-interface *core/src/commonMain/kotlin/org/rubicon/game/IEvent.kt*
+<details>
+  <summary>interface core/src/commonMain/kotlin/org/rubicon/game/IEvent.kt</summary>
 
 ```kotlin
 package org.rubicon.game
@@ -408,6 +418,10 @@ interface IEvent<T : Enum<T>, S> {
 }
 ```
 
+</details>
+
+
+
 В данном листинге кода мы можем наблюдать аннотацию **@JsExport**, она необходима чтобы сущность для которой указывается
 эта аннотация была доступна на JS и чтобы названия методов сохранились. Так же наиболее часто можно встретить
 аннотацию **@JsName**, которая необходима для указания наименования в случаях когда это не может сделаться
@@ -416,7 +430,8 @@ interface IEvent<T : Enum<T>, S> {
 перегрузки в Java. Ну и так же в приведенных ниже листингах кода можно встретить аннотацию **@Throws** добавляет в
 целевую сборку о том что метод может быть завершен с ошибкой и стоит обработать исключение.
 
-class *core/src/commonMain/kotlin/org/rubicon/game/impl/events/Event.kt*
+<details>
+  <summary>class core/src/commonMain/kotlin/org/rubicon/game/impl/events/Event.kt</summary>
 
 ```kotlin
 package org.rubicon.game.impl.events
@@ -431,6 +446,11 @@ open class Event<T : Enum<T>, S>(
 ) : IEvent<T, S>
 ```
 
+</details>
+
+
+
+
 После реализации события можем перейти к объявлению **IEventEmitter** и его реализации **EventEmitter**.
 
 Для более стандартизированной работы с данными объявим у **IEventEmitter** два обобщенных типа:
@@ -438,7 +458,8 @@ open class Event<T : Enum<T>, S>(
 - T - это тип события, который может быть только перечисляемым типом.
 - S - это источник события.
 
-Interface *./core/src/commonMain/kotlin/org/rubicon/game/IEventEmitter.kt*
+<details>
+  <summary>Interface ./core/src/commonMain/kotlin/org/rubicon/game/IEventEmitter.kt</summary>
 
 ```kotlin
 package org.rubicon.game
@@ -479,7 +500,14 @@ interface IEventEmitter<T : Enum<T>, S> {
 }
 ```
 
-class *core/src/commonMain/kotlin/org/rubicon/game/impl/events/EventEmitter.kt*
+</details>
+
+
+
+
+
+<details>
+  <summary>Class core/src/commonMain/kotlin/org/rubicon/game/impl/events/EventEmitter.kt</summary>
 
 ```kotlin
 package org.rubicon.game.impl.events
@@ -523,6 +551,12 @@ abstract class EventEmitter<T : Enum<T>, S> : IEventEmitter<T, S> {
 }
 ```
 
+</details>
+
+
+
+
+
 Теперь простым наследованием мы можем научить любой класс кидать события, что позволяет нам перейти к созданию главного
 класса игры **Game**. Но для этого так же нужно объявить типы каких событий наш класс **Game** будет кидать.
 
@@ -532,7 +566,8 @@ abstract class EventEmitter<T : Enum<T>, S> : IEventEmitter<T, S> {
 - CHANGE_CELL - событие изменения состояния ячейки игрового поля (того кубика, где рисуется крестик или нолик),
   соответственно будет кидаться когда в ячейку проставится крестик, нолик или сбросится состояние.
 
-enum *core/src/commonMain/kotlin/org/rubicon/game/impl/events/GameEventType.kt*
+<details>
+  <summary>Enum core/src/commonMain/kotlin/org/rubicon/game/impl/events/GameEventType.kt</summary>
 
 ```kotlin
 package org.rubicon.game.impl.events
@@ -556,10 +591,17 @@ enum class GameEventType {
 }
 ```
 
+</details>
+
+
+
+
+
 Теперь у нас достаточный набор классов и интерфейсов чтобы, чтобы объявить интерфейс **IGame** и указать методы которые
 можно будет вызывать на стороне представления.
 
-interface *core/src/commonMain/kotlin/org/rubicon/game/IGame.kt*
+<details>
+  <summary>Interface core/src/commonMain/kotlin/org/rubicon/game/IGame.kt</summary>
 
 ```kotlin
 package org.rubicon.game
@@ -587,11 +629,18 @@ interface IGame : IEventEmitter<GameEventType, IGame> {
 }
 ```
 
+</details>
+
+
+
+
+
 Но для непосредственной реализации самой имплементации **IGame** нам не хватает еще четырех сущностей:
 
 Сущность первая. **PlayerType** перечисляемый класс обозначающий игрока, крестик, нолик или его отсутствие.
 
-enum *core/src/commonMain/kotlin/org/rubicon/game/impl/PlayerType.kt*
+<details>
+  <summary>Enum core/src/commonMain/kotlin/org/rubicon/game/impl/PlayerType.kt</summary>
 
 ```kotlin
 package org.rubicon.game.impl
@@ -620,11 +669,18 @@ enum class PlayerType {
 }
 ```
 
+</details>
+
+
+
+
+
 Сущность вторая. **IFieldCell** ячейка игрового поля, которая будет отвечать за квадратик с крестиком или ноликом на
 игровом поле. Экземпляр реализации этого класса будет отдаваться представлению для отрисовки его состояния и для
 принятия клика.
 
-interface *core/src/commonMain/kotlin/org/rubicon/game/IFieldCell.kt*
+<details>
+  <summary>Interface core/src/commonMain/kotlin/org/rubicon/game/IFieldCell.kt</summary>
 
 ```kotlin
 package org.rubicon.game
@@ -659,9 +715,16 @@ interface IFieldCell {
 }
 ```
 
+</details>
+
+
+
+
+
 И конечно же реализуем имплементацию **FieldCell**.
 
-class *core/src/commonMain/kotlin/org/rubicon/game/impl/FieldCell.kt*
+<details>
+  <summary>Class core/src/commonMain/kotlin/org/rubicon/game/impl/FieldCell.kt</summary>
 
 ```kotlin
 package org.rubicon.game.impl
@@ -704,10 +767,17 @@ class FieldCell(
 }
 ```
 
+</details>
+
+
+
+
+
 Сущность третья. **GameCellEvent** событие обозначающее изменения состояния ячейки игрового поля с указанием этой самой
 ячейки.
 
-class *core/src/commonMain/kotlin/org/rubicon/game/impl/events/GameCellEvent.kt*
+<details>
+  <summary>Class core/src/commonMain/kotlin/org/rubicon/game/impl/events/GameCellEvent.kt</summary>
 
 ```kotlin
 package org.rubicon.game.impl.events
@@ -724,10 +794,17 @@ class GameCellEvent(
 ) : Event<GameEventType, IGame>(GameEventType.CHANGE_CELL, source)
 ```
 
+</details>
+
+
+
+
+
 Сущность четвертая. **GameOverEvent** событие обозначающее окончание игры с содержанием информации о победителе и
 выигрышной комбинации игровых ячеек.
 
-class *core/src/commonMain/kotlin/org/rubicon/game/impl/events/GameOverEvent.kt*
+<details>
+  <summary>Class core/src/commonMain/kotlin/org/rubicon/game/impl/events/GameOverEvent.kt</summary>
 
 ```kotlin
 package org.rubicon.game.impl.events
@@ -750,6 +827,11 @@ class GameOverEvent(
 }
 ```
 
+</details>
+
+
+
+
 И последний самый интересный класс в нашем SDK, но не последний в этой статье, класс **Game**. Этот класс реализует
 основную логику игры. Суть логики должна быть всем понятна кто играл в крестики-нолики. Изначально у нас есть поле 3 x
 3, и выигрывает сторона, которая поставит свой знак в 3-х клетках подряд. Логика работы такая что мы
@@ -760,7 +842,8 @@ class GameOverEvent(
 - проверяем законченность игры
 - кидаем событие об окончании игры
 
-class *core/src/commonMain/kotlin/org/rubicon/game/impl/Game.kt*
+<details>
+  <summary>Class core/src/commonMain/kotlin/org/rubicon/game/impl/Game.kt</summary>
 
 ```kotlin
 package org.rubicon.game.impl
@@ -918,6 +1001,10 @@ class Game : EventEmitter<GameEventType, IGame>(), IGame {
 }
 ```
 
+</details>
+
+
+
 Все, SDK готово, а это значит можем начинать использовать его на всех платформах в которые может компилироваться Kotlin,
 и начнем с JS.
 
@@ -947,7 +1034,8 @@ build/js/packages/tictactoe-core* которая по своей структу�
 процесс взаимодействия с SDK. Уверен, что можно было бы реализовать это красивее и чище, но это лишь демонстрация
 возможности работы с SDK а на паттерн проектирования.
 
-*index.js*
+<details>
+  <summary>index.js</summary>
 
 ```html
 <!DOCTYPE html>
@@ -1112,6 +1200,9 @@ build/js/packages/tictactoe-core* которая по своей структу�
 </html>
 ```
 
+</details>
+
+
 И вот так просто с точки зрения потребителя SDK мы интегрировали написанный на Kotlin код в JS пример и получили вот
 такой работающий результат.
 
@@ -1160,7 +1251,8 @@ xcodebuild -create-xcframework \
 и отображением интерфейса, чтобы получить полноценное приложение под iOS. Для этого переходим в файл **ContentView**
 который автоматически создал Xcode при создании проекта. И напишем там вот такой вот код.
 
-*ContentView.swift*
+<details>
+  <summary>ContentView.swift</summary>
 
 ```swift
 import SwiftUI
@@ -1303,6 +1395,9 @@ struct ContentView_Previews: PreviewProvider {
 }
 ```
 
+</details>
+
+
 Конечно наверное не стоит пихать все в один файл и в идеале при реальной разработке нужно это все разделить в
 соответствии с паттернами проектирования, но так как это демо проект можно и сделать так. В любом случае это работает и
 после запуска мы можем наблюдать вот такой вот результата.
@@ -1350,16 +1445,56 @@ Empty Activity**.
 не будет. Если нет возможности добавить зависимость на `kotlin-stdlib` то при реализации `IEventEmitter` стоит принимать
 не лямбду, а интерфейс который будет реализован на каждой платформе.
 
+<details>
+  <summary>build.gradle (Module: TicTacToe.app)</summary>
+
 ```groovy
-// ...
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    compileSdk 32
+
+    defaultConfig {
+        applicationId "com.example.tictactoe"
+        minSdk 29
+        targetSdk 32
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
 dependencies {
     // Добавляем зависимость на наш SDK
     implementation files('../../../core/build/libs/core-jvm-1.0.0.jar')
     // Добавляем зависимость для совместимости Kotlin лямбд
     implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.7.10'
-    // ...
+
+    implementation 'androidx.appcompat:appcompat:1.3.0'
+    implementation 'com.google.android.material:material:1.4.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation files('../core/build/libs/')
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 }
 ```
+
+</details>
 
 Средствами ide или командой gradle обновляем зависимости, чтобы при написании кода ide понимала класс которые находятся
 в наших зависимостях.
@@ -1370,6 +1505,9 @@ gradle --refresh-dependencies
 
 Далее накидываем простой интерфейс с кнопкой играть и перезапуска, и текстовым полем для вывода сообщений. Кнопки
 игрового поля создадим динамически.
+
+<details>
+  <summary>Layout activity_main.xml</summary>
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1424,11 +1562,19 @@ gradle --refresh-dependencies
 </androidx.constraintlayout.widget.ConstraintLayout>
 ```
 
+</details>
+
+
+
+
 И создаем простую реализацию на Java. Суть которого заключается в том же в чем и на предыдущих платформах, создать мост
 между представлением и SDK. Если чуть подробнее, то данный класс реализует такие функции как:
 
 - Создание поля из кнопок. И передача события клика кнопки соответствующей ячейки в SDK.
 - Подписка на события SDK. И обновление представления в соответствии с этими событиями.
+
+<details>
+  <summary>Class MainActivity.java</summary>
 
 ```java
 package com.example.tictactoe;
@@ -1572,6 +1718,9 @@ public class MainActivity extends AppCompatActivity {
     }
 }
 ```
+
+</details>
+
 
 Запускаем наше приложение. Проверяем. Все работает.
 
